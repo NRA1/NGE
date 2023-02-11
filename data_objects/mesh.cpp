@@ -7,6 +7,7 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices_, std
         EBO(0)
 {
     setupMesh();
+    calculateBoundingBox();
 }
 
 void Mesh::setupMesh()
@@ -46,6 +47,14 @@ void Mesh::setupMesh()
     glBindVertexArray(0);
 }
 
+void Mesh::calculateBoundingBox()
+{
+    Box box(0, 0, 0);
+    for(const auto &vertex : vertices_)
+        box.expand(vertex);
+    bounding_box_ = box;
+}
+
 void Mesh::draw(ShaderProgram &shader_program)
 {
     unsigned int diffuseNr = 1;
@@ -72,6 +81,12 @@ void Mesh::draw(ShaderProgram &shader_program)
     glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices_.size()), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
     glActiveTexture(GL_TEXTURE0);
+}
+
+
+const Box &Mesh::boundingBox() const
+{
+    return bounding_box_;
 }
 
 Mesh::~Mesh()

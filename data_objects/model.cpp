@@ -3,6 +3,7 @@
 Model::Model(const std::string &path)
 {
     loadModel(ResourceLoader::fullPath(path));
+    calculateBoundingBox();
 }
 
 void Model::render(ShaderProgram &shader_program)
@@ -148,6 +149,19 @@ Model::loadMaterialTextures(aiMaterial *mat, aiTextureType type, const std::stri
     }
 
     return textures;
+}
+
+const Box &Model::boundingBox() const
+{
+    return bounding_box_;
+}
+
+void Model::calculateBoundingBox()
+{
+    Box box(0, 0, 0);
+    for(const auto &mesh : meshes_)
+        box.unite(mesh->boundingBox());
+    bounding_box_ = box;
 }
 
 Model::~Model()

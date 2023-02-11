@@ -3,20 +3,20 @@
 #include <utility>
 
 MeshComponent::MeshComponent(std::string name, std::string model_path)
-        : AbstractComponent(std::move(name)), model_(nullptr), bounding_box_(Box(0, 0, 0)),
-          model_path_(std::move(model_path)), loaded_(false)
+        : AbstractMeshComponent(std::move(name)), model_(nullptr), model_path_(std::move(model_path)), loaded_(false)
 {
 
-}
-
-int MeshComponent::capabilities()
-{
-    return Capability::MeshRenderer;
 }
 
 const Box &MeshComponent::boundingBox() const
 {
-    return bounding_box_;
+    if(model_ == nullptr)
+    {
+        log() - Critical < "Model not set, returning invalid bounding box.";
+        log() - Critical < "Memory leak!";
+        return *new Box(-1, -1, -1);
+    }
+    return model_->boundingBox();
 }
 
 void MeshComponent::load()
@@ -39,40 +39,6 @@ void MeshComponent::render()
 {
     setModelPosition();
     model_->render(*object()->stage()->shaderProgram());
-
-//    float vertices[] = {
-//            0.5f,  0.5f, 0.0f,  // top right
-//            0.5f, -0.5f, 0.0f,  // bottom right
-//            -0.5f, -0.5f, 0.0f,  // bottom left
-//            -0.5f,  0.5f, 0.0f   // top left
-//    };
-//    unsigned int indices[] = {  // note that we start from 0
-//            0, 1, 3,   // first triangle
-//            1, 2, 3    // second triangle
-//    };
-//
-//    unsigned int VAO;
-//    glGenVertexArrays(1, &VAO);
-//    glBindVertexArray(VAO);
-//
-//    unsigned int VBO;
-//    glGenBuffers(1, &VBO);
-//    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-//    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
-//
-//    unsigned int EBO;
-//    glGenBuffers(1, &EBO);
-//    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-//    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
-//    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-//
-//    shader_program_->use();
-//
-//    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)nullptr);
-//    glEnableVertexAttribArray(0);
-////    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-//    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-////    glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
 MeshComponent::~MeshComponent()
@@ -91,4 +57,9 @@ void MeshComponent::setModelPosition()
     model = glm::translate(model, object()->position());
     model = glm::scale(model, Vec3(1.0f, 1.0f, 1.0f));
     object()->stage()->shaderProgram()->setMat4("model", model);
+}
+
+int MeshComponent::type()
+{
+    return MeshComponentType;
 }

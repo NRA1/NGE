@@ -2,6 +2,8 @@
 #define NGE_BOX_HPP
 
 
+#include "vertex.hpp"
+
 class Box
 {
 public:
@@ -14,6 +16,9 @@ public:
     void setHeight(int height);
     int depth() const;
     void setDepth(int depth);
+
+    void expand(const Vertex &vertex);
+    void unite(const Box &box);
 
 private:
     int width_;

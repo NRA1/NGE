@@ -1,11 +1,9 @@
 #ifndef NGE_ABSTRACT_COMPONENT_HPP
 #define NGE_ABSTRACT_COMPONENT_HPP
 
-
 #include <string>
-#include "object.hpp"
-#include "../data_objects/box.hpp"
-#include "../data_objects/shader_program.hpp"
+#include "../../data_objects/box.hpp"
+#include "../../data_objects/shader_program.hpp"
 
 class Object;
 class WorldStage;
@@ -18,14 +16,15 @@ public:
     [[nodiscard]] const std::string &name() const;
     Object *object();
     void setObject(Object *object);
-    virtual int capabilities() = 0;
+//    virtual int features() = 0;
     virtual void objectChanged() = 0;
+    virtual int type() = 0;
 
-    virtual void load() = 0;
-    virtual void unload() = 0;
-    virtual void render() = 0;
-    virtual void setModelPosition() = 0;
-    [[nodiscard]] virtual const Box &boundingBox() const = 0;
+//    virtual void load() = 0;
+//    virtual void unload() = 0;
+//    virtual void render() = 0;
+//    virtual void setModelPosition() = 0;
+//    [[nodiscard]] virtual const Box &boundingBox() const = 0;
 
     virtual ~AbstractComponent() = default;
 

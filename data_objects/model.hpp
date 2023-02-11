@@ -18,6 +18,7 @@ class Model
 public:
     explicit Model(const std::string &path);
     void render(ShaderProgram &shader_program);
+    const Box &boundingBox() const;
 
     ~Model();
 
@@ -25,12 +26,14 @@ private:
     void loadModel(const std::string& path);
     void processNode(aiNode *node, const aiScene *scene);
     Mesh *processMesh(aiMesh *mesh, const aiScene *scene);
-    std::vector<Texture *>
-    loadMaterialTextures(aiMaterial *mat, aiTextureType type, const std::string &type_name, const aiScene *scene);
+    std::vector<Texture *> loadMaterialTextures(aiMaterial *mat, aiTextureType type, const std::string &type_name,
+                                                const aiScene *scene);
+    void calculateBoundingBox();
 
     std::vector<Mesh*> meshes_;
     std::vector<Texture*> loaded_textures_;
     std::string directory_;
+    Box bounding_box_;
 };
 
 #endif //NGE_MODEL_HPP
