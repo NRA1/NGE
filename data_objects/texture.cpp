@@ -34,3 +34,8 @@ void Texture::setPath(const std::string &path)
 {
     path_ = path;
 }
+
+Texture::~Texture()
+{
+    glDeleteTextures(1, &id_);
+}

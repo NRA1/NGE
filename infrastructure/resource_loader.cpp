@@ -63,10 +63,11 @@ std::optional<Texture *>
 ResourceLoader::loadTexture(const std::string &file, const std::string &directory, const std::string &type,
                             const aiScene *scene)
 {
-    std::string texture_path = directory + '/' + file;
     std::optional<Image> image_opt;
+    std::string path;
     if(const aiTexture *texture = scene->GetEmbeddedTexture(file.c_str()))
     {
+        path = file;
         if(texture->mHeight != 0)
         {
             log() - LogLevel::Critical < "Loading of textures of uncompressed file formats is not supported.";
@@ -76,12 +77,31 @@ ResourceLoader::loadTexture(const std::string &file, const std::string &director
     }
     else
     {
-        image_opt = loadImageFromFile(texture_path);
+        path = directory + '/' + file;
+        image_opt = loadImageFromFile(path);
     }
 
     if(!image_opt.has_value()) return std::nullopt;
     Image image = image_opt.value();
 
+    return textureFromImage(image, type, path);
+}
+
+std::optional<Image> ResourceLoader::loadImageFromMemory(const unsigned char *buffer, int len)
+{
+    int width, height, nr_components;
+    unsigned char *data = stbi_load_from_memory(buffer, len, &width, &height, &nr_components, 0);
+    if(!data)
+    {
+        log() - Critical < "Failed to load image from memory";
+        stbi_image_free(data);
+        return std::nullopt;
+    }
+    return Image(data, width, height, nr_components);
+}
+
+Texture *ResourceLoader::textureFromImage(Image &image, const std::string &type, const std::string &path)
+{
     unsigned int texture_id;
     glGenTextures(1, &texture_id);
 
@@ -100,19 +120,6 @@ ResourceLoader::loadTexture(const std::string &file, const std::string &director
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    return new Texture(texture_id, type, fullPath(file));
-}
-
-std::optional<Image> ResourceLoader::loadImageFromMemory(const unsigned char *buffer, int len)
-{
-    int width, height, nr_components;
-    unsigned char *data = stbi_load_from_memory(buffer, len, &width, &height, &nr_components, 0);
-    if(!data)
-    {
-        log() - Critical < "Failed to load image from memory";
-        stbi_image_free(data);
-        return std::nullopt;
-    }
-    return Image(data, width, height, nr_components);
+    return new Texture(texture_id, type, fullPath(path));
 }
 

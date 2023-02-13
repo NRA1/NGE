@@ -32,25 +32,18 @@ void Object::load()
 {
     for (AbstractMeshComponent *component : mesh_components_)
         component->load();
-//    for(AbstractComponent *component : components_)
-//        ((AbstractMeshComponent*)component)->load();
 }
 
 void Object::unload()
 {
     for (AbstractMeshComponent *component : mesh_components_)
         component->unload();
-//    for(AbstractComponent *component : components_)
-//        ((AbstractMeshComponent*)component)->unload();
 }
 
 void Object::render()
 {
     for (AbstractMeshComponent *component : mesh_components_)
         component->render();
-//    for(AbstractComponent *component : components_)
-//        ((AbstractMeshComponent*)component)->render();
-//        component->setName("");
 
 }
 

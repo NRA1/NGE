@@ -16,16 +16,14 @@ public:
     Camera();
 
     void setTargetObject(Object *object);
-    void setStageViewport();
+    void setStageViewport(ShaderProgram *shader_program);
     void setViewport(Size *viewport);
-    void setShaderProgram(ShaderProgram **shader_program);
 
 private:
     Vec3 calculateEye();
 
     Object *target_object_;
     Size *viewport_;
-    ShaderProgram **shader_program_;
 };
 
 

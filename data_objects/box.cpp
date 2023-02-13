@@ -1,36 +1,36 @@
 #include "box.hpp"
 
-Box::Box(int width, int height, int depth) : width_(width), height_(height), depth_(depth)
+Box::Box(float width, float height, float depth) : width_(width), height_(height), depth_(depth)
 {
 
 }
 
-int Box::width() const
+float Box::width() const
 {
     return width_;
 }
 
-void Box::setWidth(int width)
+void Box::setWidth(float width)
 {
     width_ = width;
 }
 
-int Box::height() const
+float Box::height() const
 {
     return height_;
 }
 
-void Box::setHeight(int height)
+void Box::setHeight(float height)
 {
     height_ = height;
 }
 
-int Box::depth() const
+float Box::depth() const
 {
     return depth_;
 }
 
-void Box::setDepth(int depth)
+void Box::setDepth(float depth)
 {
     depth_ = depth;
 }

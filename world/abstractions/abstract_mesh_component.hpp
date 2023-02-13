@@ -10,11 +10,11 @@ class AbstractMeshComponent : public AbstractComponent
 public:
     AbstractMeshComponent(std::string name) : AbstractComponent(name) { };
 
-    virtual void load() { log() - Info < "Called base"; };
+    virtual void load() = 0;
     virtual void unload() = 0;
-    virtual void render() { log() - Info < "Called base"; };
-    virtual void setModelPosition() {};
-    [[nodiscard]] virtual const Box &boundingBox() const { return *new Box();};
+    virtual void render() = 0;
+    virtual void setModelPosition() = 0;
+    [[nodiscard]] virtual const Box &boundingBox() const = 0;
 
     virtual ~AbstractMeshComponent() = default;
 };

@@ -1,7 +1,7 @@
 #include "world_stage.hpp"
 #include "../infrastructure/logger.hpp"
 
-WorldStage::WorldStage() : viewport_(Size(-1, -1)), camera_(nullptr), shader_program_(nullptr) { }
+WorldStage::WorldStage() : viewport_(Size(-1, -1)), camera_(nullptr), ground_(nullptr), shader_program_(nullptr) { }
 
 void WorldStage::viewportSizeChanged(Size size)
 {
@@ -21,7 +21,14 @@ void WorldStage::render()
         return;
     }
 
-    camera_->setStageViewport();
+    camera_->setStageViewport(shader_program_);
+
+    if(ground_ == nullptr)
+    {
+        log() - Critical < "Ground not set";
+    }
+    else ground_->render();
+
     for (Object *object : objects_)
     {
         object->render();
@@ -68,7 +75,6 @@ void WorldStage::onDisappearing()
 void WorldStage::setCamera(Camera *camera)
 {
     camera_ = camera;
-    camera_->setShaderProgram(&shader_program_);
     camera_->setViewport(&viewport_);
 }
 
@@ -89,6 +95,12 @@ void WorldStage::handleEvent(Event *event)
     }
 }
 
+void WorldStage::setGround(Ground *ground)
+{
+    ground_ = ground;
+    ground_->setShaderProgram(&shader_program_);
+}
+
 WorldStage::~WorldStage()
 {
     for (Object *object : objects_)
@@ -98,5 +110,3 @@ WorldStage::~WorldStage()
     delete camera_;
     delete shader_program_;
 }
-
-

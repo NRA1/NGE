@@ -17,9 +17,11 @@ int main()
         Camera *camera = new Camera();
         camera->setTargetObject(object);
         MeshComponent *component = new MeshComponent("mesh", ":/models/ch1/CH1.fbx");
+        Ground *ground = new Ground(Rect(-1000, -1000, 2000, 2000), ":/models/ground/diffuse.jpg");
         object->addComponent(component);
         stage->addObject(object);
         stage->setCamera(camera);
+        stage->setGround(ground);
         window->setStage(stage);
         window->exec();
         delete window;

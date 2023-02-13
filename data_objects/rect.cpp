@@ -1,6 +1,6 @@
 #include "rect.hpp"
 
-Rect::Rect(int x, int y, int width, int height)
+Rect::Rect(float x, float y, float width, float height)
 {
     x_ = x;
     y_ = y;
@@ -8,42 +8,42 @@ Rect::Rect(int x, int y, int width, int height)
     height_ = height;
 }
 
-int Rect::x() const
+float Rect::x() const
 {
     return x_;
 }
 
-void Rect::setX(int x)
+void Rect::setX(float x)
 {
     x_ = x;
 }
 
-int Rect::y() const
+float Rect::y() const
 {
     return y_;
 }
 
-void Rect::setY(int y)
+void Rect::setY(float y)
 {
     y_ = y;
 }
 
-int Rect::width() const
+float Rect::width() const
 {
     return width_;
 }
 
-void Rect::setWidth(int width)
+void Rect::setWidth(float width)
 {
     width_ = width;
 }
 
-int Rect::height() const
+float Rect::height() const
 {
     return height_;
 }
 
-void Rect::setHeight(int height)
+void Rect::setHeight(float height)
 {
     height_ = height;
 }

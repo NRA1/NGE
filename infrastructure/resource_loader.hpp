@@ -18,6 +18,7 @@ public:
     static std::optional<Image> loadImageFromMemory(const unsigned char *buffer, int len);
     static std::filesystem::path fullPath(const std::string &path);
     static std::optional<Texture*> loadTexture(const std::string &file, const std::string &directory, const std::string &type, const aiScene *scene);
+    static Texture *textureFromImage(Image &image, const std::string &type, const std::string &path);
 
 private:
     static std::filesystem::path resourcesBasePath();

@@ -1,27 +1,27 @@
 #include "size.hpp"
 
-Size::Size(int width, int height)
+Size::Size(float width, float height)
 {
     width_ = width;
     height_ = height;
 }
 
-int Size::width() const
+float Size::width() const
 {
     return width_;
 }
 
-void Size::setWidth(int width)
+void Size::setWidth(float width)
 {
     width_ = width;
 }
 
-int Size::height() const
+float Size::height() const
 {
     return height_;
 }
 
-void Size::setHeight(int height)
+void Size::setHeight(float height)
 {
     height_ = height;
 }

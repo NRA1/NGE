@@ -13,6 +13,7 @@
 #include "../data_objects/events/key_press_event.hpp"
 #include "../enums/event_type.hpp"
 #include "../enums/key.hpp"
+#include "../world/ground.hpp"
 
 class Object;
 
@@ -28,6 +29,7 @@ public:
     void addObject(Object *object);
     void removeObject(Object *object);
     void setCamera(Camera *camera);
+    void setGround(Ground *ground);
 
     ShaderProgram *shaderProgram();
 
@@ -41,6 +43,7 @@ private:
 
     std::vector<Object *> objects_;
     Camera *camera_;
+    Ground *ground_;
     ShaderProgram *shader_program_;
 };
 

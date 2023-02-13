@@ -5,22 +5,22 @@
 class Rect
 {
 public:
-    explicit Rect(int x = 0, int y = 0, int width = 0, int height = 0);
+    explicit Rect(float x = 0, float y = 0, float width = 0, float height = 0);
 
-    int x() const;
-    void setX(int x);
-    int y() const;
-    void setY(int y);
-    int width() const;
-    void setWidth(int width);
-    int height() const;
-    void setHeight(int height);
+    float x() const;
+    void setX(float x);
+    float y() const;
+    void setY(float y);
+    float width() const;
+    void setWidth(float width);
+    float height() const;
+    void setHeight(float height);
 
 private:
-    int x_;
-    int y_;
-    int width_;
-    int height_;
+    float x_;
+    float y_;
+    float width_;
+    float height_;
 };
 
 

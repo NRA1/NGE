@@ -8,22 +8,22 @@ class Box
 {
 public:
     Box() = default;
-    Box(int width, int height, int depth);
+    Box(float width, float height, float depth);
 
-    int width() const;
-    void setWidth(int width);
-    int height() const;
-    void setHeight(int height);
-    int depth() const;
-    void setDepth(int depth);
+    float width() const;
+    void setWidth(float width);
+    float height() const;
+    void setHeight(float height);
+    float depth() const;
+    void setDepth(float depth);
 
     void expand(const Vertex &vertex);
     void unite(const Box &box);
 
 private:
-    int width_;
-    int height_;
-    int depth_;
+    float width_;
+    float height_;
+    float depth_;
 };
 
 

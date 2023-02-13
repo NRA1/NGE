@@ -18,6 +18,8 @@ public:
     [[nodiscard]] const std::string &path() const;
     void setPath(const std::string &path);
 
+    ~Texture();
+
 private:
     unsigned int id_;
     std::string type_;
