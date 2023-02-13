@@ -10,7 +10,7 @@ void Object::addComponent(AbstractComponent *component)
 {
     component->setObject(this);
     components_.push_back(component);
-    if(component->type() == MeshComponentType)
+    if(component->type() & MeshComponentType)
         mesh_components_.push_back((AbstractMeshComponent*)component);
     features_ |= component->type();
 }
@@ -18,7 +18,7 @@ void Object::addComponent(AbstractComponent *component)
 void Object::removeComponent(const std::string &name)
 {
     AbstractComponent *component = removeComponentFromVector<AbstractComponent>(components_, name);
-    if(component->type() == MeshComponentType) removeComponentFromVector<AbstractMeshComponent>(mesh_components_, name);
+    if(component->type() & MeshComponentType) removeComponentFromVector<AbstractMeshComponent>(mesh_components_, name);
 
     delete component;
 }

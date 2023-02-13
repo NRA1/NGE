@@ -61,5 +61,5 @@ void MeshComponent::setModelPosition()
 
 int MeshComponent::type()
 {
-    return MeshComponentType;
+    return MeshModelComponentType;
 }
