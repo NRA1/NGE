@@ -17,7 +17,7 @@ void AbstractComponent::setName(std::string name)
     name_ = std::move(name);
 }
 
-Object *AbstractComponent::object()
+Object *AbstractComponent::object() const
 {
     return object_;
 }

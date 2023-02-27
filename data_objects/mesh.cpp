@@ -1,4 +1,5 @@
 #include "mesh.hpp"
+#include "positioned_box.hpp"
 
 #include <utility>
 
@@ -49,7 +50,7 @@ void Mesh::setupMesh()
 
 void Mesh::calculateBoundingBox()
 {
-    Box box(0, 0, 0);
+    PositionedBox box;
     for(const auto &vertex : vertices_)
         box.expand(vertex);
     bounding_box_ = box;
@@ -84,7 +85,7 @@ void Mesh::draw(ShaderProgram &shader_program)
 }
 
 
-const Box &Mesh::boundingBox() const
+const PositionedBox &Mesh::boundingBox() const
 {
     return bounding_box_;
 }

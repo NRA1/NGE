@@ -6,13 +6,14 @@
 #include "texture.hpp"
 #include "shader_program.hpp"
 #include "box.hpp"
+#include "positioned_box.hpp"
 
 class Mesh
 {
 public:
     Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices_, std::vector<Texture*> textures);
     void draw(ShaderProgram &shader_program);
-    const Box &boundingBox() const;
+    const PositionedBox &boundingBox() const;
 
     ~Mesh();
 
@@ -21,7 +22,7 @@ private:
     void calculateBoundingBox();
 
     std::vector<Vertex> vertices_;
-    Box bounding_box_;
+    PositionedBox bounding_box_;
     std::vector<unsigned int> indices_;
     std::vector<Texture*> textures_;
     unsigned int VAO, VBO, EBO;

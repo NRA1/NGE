@@ -14,11 +14,11 @@ public:
     explicit AbstractComponent(std::string name);
     void setName(std::string name);
     [[nodiscard]] const std::string &name() const;
-    Object *object();
+    Object *object() const;
     void setObject(Object *object);
 //    virtual int features() = 0;
     virtual void objectChanged() = 0;
-    virtual int type() = 0;
+    virtual unsigned int type() = 0;
 
 //    virtual void load() = 0;
 //    virtual void unload() = 0;

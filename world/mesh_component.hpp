@@ -18,8 +18,8 @@ class MeshComponent : public AbstractMeshComponent
 {
 public:
     explicit MeshComponent(std::string name, std::string model_path);
-    [[nodiscard]] const Box &boundingBox() const override;
-    int type() override;
+    [[nodiscard]] const PositionedBox &boundingBox() const override;
+    unsigned int type() override;
     void load() override;
     void unload() override;
     void render() override;

@@ -18,7 +18,7 @@ class Model
 public:
     explicit Model(const std::string &path);
     void render(ShaderProgram &shader_program);
-    const Box &boundingBox() const;
+    const PositionedBox &boundingBox() const;
 
     ~Model();
 
@@ -33,7 +33,7 @@ private:
     std::vector<Mesh*> meshes_;
     std::vector<Texture*> loaded_textures_;
     std::string directory_;
-    Box bounding_box_;
+    PositionedBox bounding_box_;
 };
 
 #endif //NGE_MODEL_HPP

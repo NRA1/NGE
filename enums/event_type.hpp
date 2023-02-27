@@ -6,7 +6,8 @@ enum EventType
     KeyPressEventType = 0b00001,
     KeyReleaseEventType = 0b00010,
     MousePressEventType = 0b00100,
-    MouseReleaseEventType = 0b01000
+    MouseReleaseEventType = 0b01000,
+    MouseMoveEventType = 0b10000
 };
 
 #endif //NGE_EVENT_TYPE_HPP

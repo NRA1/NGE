@@ -1,8 +1,9 @@
 #ifndef NGE_WINDOW_HPP
 #define NGE_WINDOW_HPP
 
-
 #include <string>
+#include <chrono>
+#include <utility>
 #include "../infrastructure/logger.hpp"
 #include "../infrastructure/game.hpp"
 #include "../data_objects/size.hpp"
@@ -15,6 +16,8 @@ public:
     GameWindow(std::string title, int width, int height, int state);
     void exec();
     void setStage(AbstractStage *stage);
+    void setCursorVisibility(bool visible);
+    bool isCursorVisible();
 
     ~GameWindow();
 

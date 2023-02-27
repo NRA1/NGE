@@ -1,6 +1,6 @@
 #include "box.hpp"
 
-Box::Box(float width, float height, float depth) : width_(width), height_(height), depth_(depth)
+Box::Box(float width, float height, float depth) : width_(width / 2), height_(height / 2), depth_(depth / 2)
 {
 
 }
@@ -33,18 +33,4 @@ float Box::depth() const
 void Box::setDepth(float depth)
 {
     depth_ = depth;
-}
-
-void Box::expand(const Vertex &vertex)
-{
-    if(width_ < vertex.Position.x) width_ = vertex.Position.x;
-    if(height_ < vertex.Position.y) height_ = vertex.Position.y;
-    if(depth_ < vertex.Position.z) depth_ = vertex.Position.z;
-}
-
-void Box::unite(const Box &box)
-{
-    if(width_ < box.width_) width_ = box.width_;
-    if(height_ < box.height_) width_ = box.height_;
-    if(depth_ < box.depth_) depth_ = box.depth_;
 }

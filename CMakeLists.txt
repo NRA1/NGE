@@ -14,6 +14,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 #settings
 add_compile_definitions(RESOURCES_PREFIX_PATH="../")
 
+add_compile_definitions(DISPLAY_COLLIDERS=false)
+
 # BOOST
 if (UNIX)
 add_subdirectory(lib/boost/unix/core)
@@ -35,10 +37,11 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_compile_definitions(DEBUG)
 endif ()
 
-add_executable(NGE main.cpp infrastructure/logger.cpp infrastructure/logger.hpp infrastructure/assertions.hpp interface/window.cpp interface/window.hpp infrastructure/game.cpp infrastructure/game.hpp data_objects/size.cpp data_objects/size.hpp native/x_11_window.inl native/x_11_window.hpp native/abstract_native_window.hpp data_objects/rect.cpp data_objects/rect.hpp infrastructure/resource_loader.hpp infrastructure/resource_loader.cpp interface/abstract_stage.hpp world/object.cpp world/object.hpp world/abstractions/abstract_component.cpp world/abstractions/abstract_component.hpp enums/component_type.hpp data_objects/box.cpp data_objects/box.hpp world/mesh_component.cpp world/mesh_component.hpp data_objects/vec.hpp interface/world_stage.cpp interface/world_stage.hpp infrastructure/common_fallbacks.hpp data_objects/vertex.hpp data_objects/texture.cpp data_objects/texture.hpp data_objects/mesh.cpp data_objects/mesh.hpp data_objects/shader_program.cpp data_objects/shader_program.hpp infrastructure/type_helpers.hpp data_objects/model.cpp data_objects/model.hpp data_objects/image.cpp data_objects/image.hpp infrastructure/common_fallbacks.cpp enums/log_level.hpp world/camera.cpp world/camera.hpp data_objects/events/event.cpp data_objects/events/event.hpp enums/event_type.hpp data_objects/events/key_press_event.cpp data_objects/events/key_press_event.hpp enums/key.hpp native/native_helpers.hpp native/native_helpers.cpp enums/modifier.hpp enums/modifier.cpp world/abstractions/abstract_mesh_component.hpp world/object.inl world/ground.cpp world/ground.hpp data_objects/sprite.cpp data_objects/sprite.hpp world/abstractions/abstract_mesh_component.cpp)
+add_executable(NGE main.cpp infrastructure/logger.cpp infrastructure/logger.hpp infrastructure/assertions.hpp interface/window.cpp interface/window.hpp infrastructure/game.cpp infrastructure/game.hpp data_objects/size.cpp data_objects/size.hpp native/x_11_window.inl native/x_11_window.hpp native/abstract_native_window.hpp data_objects/rect.cpp data_objects/rect.hpp infrastructure/resource_loader.hpp infrastructure/resource_loader.cpp interface/abstract_stage.hpp world/object.cpp world/object.hpp world/abstractions/abstract_component.cpp world/abstractions/abstract_component.hpp enums/component_type.hpp data_objects/box.cpp data_objects/box.hpp world/mesh_component.cpp world/mesh_component.hpp data_objects/vec.hpp interface/world_stage.cpp interface/world_stage.hpp infrastructure/common_fallbacks.hpp data_objects/vertex.hpp data_objects/texture.cpp data_objects/texture.hpp data_objects/mesh.cpp data_objects/mesh.hpp data_objects/shader_program.cpp data_objects/shader_program.hpp infrastructure/type_helpers.hpp data_objects/model.cpp data_objects/model.hpp data_objects/image.cpp data_objects/image.hpp infrastructure/common_fallbacks.cpp enums/log_level.hpp world/camera.cpp world/camera.hpp data_objects/events/event.cpp data_objects/events/event.hpp enums/event_type.hpp data_objects/events/key_press_event.cpp data_objects/events/key_press_event.hpp enums/key.hpp native/native_helpers.hpp native/native_helpers.cpp enums/modifier.hpp enums/modifier.cpp world/abstractions/abstract_mesh_component.hpp world/object.inl world/ground.cpp world/ground.hpp data_objects/sprite.cpp data_objects/sprite.hpp world/abstractions/abstract_mesh_component.cpp data_objects/motion_vector.cpp data_objects/motion_vector.hpp data_objects/motion_manipulation_object.cpp data_objects/motion_manipulation_object.hpp data_objects/rotation.cpp data_objects/rotation.hpp world/input_component.cpp world/input_component.hpp world/abstractions/abstract_input_component.cpp world/abstractions/abstract_input_component.hpp data_objects/events/key_release_event.cpp data_objects/events/key_release_event.hpp data_objects/events/mouse_move_event.cpp data_objects/events/mouse_move_event.hpp native/abstract_native_window.inl interface/interface_helpers.hpp interface/interface_helpers.cpp data_objects/positioned_box.cpp data_objects/positioned_box.hpp data_objects/position.cpp data_objects/position.hpp world/debug_box.cpp world/debug_box.hpp)
 target_link_libraries(NGE glad)
 if (UNIX)
     target_link_libraries(NGE glx)
+target_link_libraries(NGE X11)
 endif ()
 
 if (WINDOWS)
@@ -46,7 +49,6 @@ if (WINDOWS)
 endif ()
 target_link_libraries(NGE boost_stacktrace_basic)
 target_link_libraries(NGE boost_filesystem)
-target_link_libraries(NGE X11)
 target_link_libraries(NGE stb_image)
 target_link_libraries(NGE assimp)
 target_link_libraries(NGE glm)

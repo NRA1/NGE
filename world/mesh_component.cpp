@@ -8,13 +8,13 @@ MeshComponent::MeshComponent(std::string name, std::string model_path)
 
 }
 
-const Box &MeshComponent::boundingBox() const
+const PositionedBox &MeshComponent::boundingBox() const
 {
     if(model_ == nullptr)
     {
         log() - Critical < "Model not set, returning invalid bounding box.";
         log() - Critical < "Memory leak!";
-        return *new Box(-1, -1, -1);
+        return *new PositionedBox(-1, -1, -1);
     }
     return model_->boundingBox();
 }
@@ -56,10 +56,19 @@ void MeshComponent::setModelPosition()
     Mat4 model = Mat4(1.0f);
     model = glm::translate(model, object()->position());
     model = glm::scale(model, Vec3(1.0f, 1.0f, 1.0f));
+
+    std::optional<Rotation> rot = object()->motionVector().grabbedRotation();
+    Rotation physics_rot;
+    if(rot.has_value()) physics_rot = object()->rotation() + rot.value();
+    else physics_rot = object()->rotation();
+
+    model = glm::rotate(model, glm::radians(physics_rot.roll()), Vec3(0, 1, 0));
+//    model = glm::rotate(model, glm::radians(physics_rot.pitch()), Vec3(0, 0, 1));
+//    model = glm::rotate(model, glm::radians(physics_rot.yaw()), Vec3(1, 0, 0));
     object()->stage()->shaderProgram()->setMat4("model", model);
 }
 
-int MeshComponent::type()
+unsigned int MeshComponent::type()
 {
-    return MeshModelComponentType;
+    return MeshComponentType;
 }

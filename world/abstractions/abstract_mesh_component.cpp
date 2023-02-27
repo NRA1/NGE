@@ -1,6 +1,6 @@
 #include "abstract_mesh_component.hpp"
 
-int AbstractMeshComponent::type()
+unsigned int AbstractMeshComponent::type()
 {
-    return ComponentType::MeshComponentType;
+    return ComponentType::AbstractMeshComponentType;
 }

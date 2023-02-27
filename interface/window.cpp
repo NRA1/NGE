@@ -1,7 +1,5 @@
 #include "window.hpp"
 
-#include <utility>
-
 GameWindow::GameWindow(std::string title, int width, int height, int) :  native_(nullptr), title_(std::move(title)),
                                                                          size_(width, height), stage_(nullptr), shown_(false)
 {
@@ -17,6 +15,8 @@ GameWindow::GameWindow(std::string title, int width, int height, int) :  native_
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDebugMessageCallback(&Game::openglDebugMessageCallback, 0);
 
     native_->setSubscriber(this);
@@ -34,10 +34,15 @@ void GameWindow::exec()
         stage_->onAppearing();
     }
 
+    unsigned int last_render = duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
+            .time_since_epoch()).count();
     while (!native_->shouldClose())
     {
         native_->poolEvents();
-        if(stage_ != nullptr) stage_->render();
+        unsigned int time = duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
+                .time_since_epoch()).count();
+        if(stage_ != nullptr) stage_->render(time - last_render);
+        last_render = time;
         native_->swapBuffers();
     }
     shown_ = false;
@@ -76,5 +81,15 @@ void GameWindow::eventHandler(Event *event)
 GameWindow::~GameWindow()
 {
     delete stage_;
+}
+
+void GameWindow::setCursorVisibility(bool visible)
+{
+    return native_->setCursorVisibility(visible);
+}
+
+bool GameWindow::isCursorVisible()
+{
+    return native_->cursorVisible();
 }
 

@@ -18,9 +18,20 @@ public:
     void setTargetObject(Object *object);
     void setStageViewport(ShaderProgram *shader_program);
     void setViewport(Size *viewport);
+    Object *targetObject() const;
+    Size *viewport() const;
+    const Vec3 &position() const;
+    void setPosition(const Vec3 &position);
+    const Rotation &rotation() const;
+    void setRotation(const Rotation &rotation);
+    std::optional<MotionVector> &motionVector();
 
 private:
     Vec3 calculateEye();
+
+    Vec3 position_;
+    Rotation rotation_;
+    std::optional<MotionVector> motion_vector_;
 
     Object *target_object_;
     Size *viewport_;

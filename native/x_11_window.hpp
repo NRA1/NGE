@@ -35,7 +35,7 @@ public:
     void setViewportChangeHandler(void (T::*handler)(Size)) override;
     void setEventHandler(void (T::*handler)(Event*)) override;
     const Size &size() const override;
-
+    void setCursorVisibility(bool visible) override;
 
     ~X11Window();
 
@@ -49,6 +49,7 @@ private:
     int screen_;
     Window window_;
     Atom wm_delete_window_;
+    Cursor cursor_;
 
     GLXContext context_;
     Colormap colormap_;

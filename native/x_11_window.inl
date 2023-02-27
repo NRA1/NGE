@@ -1,9 +1,12 @@
 #include "../interface/window.hpp"
+#include "../data_objects/events/key_release_event.hpp"
+#include "../data_objects/events/mouse_move_event.hpp"
 
 template <class T>
-X11Window<T>::X11Window(const std::string& title, Size size) : title_(title), size_(size), should_close_(false),
-                                                        subscriber_(nullptr), viewport_change_handler_(nullptr),
-                                                        event_handler_(nullptr), pressed_modifiers_(NoModifier)
+X11Window<T>::X11Window(const std::string& title, Size size) : title_(title), size_(size), cursor_(None),
+                                                               should_close_(false), subscriber_(nullptr),
+                                                               viewport_change_handler_(nullptr),
+                                                               event_handler_(nullptr), pressed_modifiers_(NoModifier)
 {
     display_ = XOpenDisplay((char*)nullptr);
     if(display_ == nullptr)
@@ -20,7 +23,7 @@ X11Window<T>::X11Window(const std::string& title, Size size) : title_(title), si
     colormap_ = XCreateColormap(display_, root, visual, AllocNone);
 
     XSetWindowAttributes attributes;
-    attributes.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | StructureNotifyMask;
+    attributes.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask | StructureNotifyMask;
     attributes.colormap = colormap_;
 
     window_ = XCreateWindow(display_, root, 0, 0, size_.width(), size_.height(), 0, DefaultDepth(display_, screen_),
@@ -118,17 +121,25 @@ void X11Window<T>::poolEvents()
     }
 
     Event *dispatch_event = nullptr;
-    while (XCheckWindowEvent(display_, window_, ExposureMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | StructureNotifyMask, &event))
+    std::vector<unsigned int> skip;
+    while (XCheckWindowEvent(display_, window_, ExposureMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask | StructureNotifyMask, &event))
     {
+        if(!skip.empty() && skip[0] == 0) continue;
+
         if(event.type == ConfigureNotify)
             windowStateChange(event.xconfigure);
         else if(event.type == KeyPress)
         {
             KeySym sym = XLookupKeysym(&event.xkey, 0);
             Key key = native::nativeToKey(sym);
+            if(key == KeyEscape)
+            {
+                should_close_ = true;
+                return;
+            }
             int modifiers = pressed_modifiers_;
             bool repeated = true;
-            if(std::find(pressed_keys_.begin(), pressed_keys_.end(), 2) != pressed_keys_.end())
+            if(std::find(pressed_keys_.begin(), pressed_keys_.end(), event.xkey.keycode) == pressed_keys_.end())
             {
                 repeated = false;
                 pressed_keys_.push_front(event.xkey.keycode);
@@ -140,6 +151,18 @@ void X11Window<T>::poolEvents()
         else if(event.type == KeyRelease)
         {
             pressed_keys_.remove(event.xkey.keycode);
+            KeySym sym = XLookupKeysym(&event.xkey, 0);
+            Key key = native::nativeToKey(sym);
+            int modifiers = pressed_modifiers_;
+            dispatch_event = new KeyReleaseEvent(key, modifiers);
+        }
+        else if(event.type == MotionNotify)
+        {
+            dispatch_event = new MouseMoveEvent(event.xmotion.x - size().width() / 2, event.xmotion.y - size().height() / 2, pressed_modifiers_);
+            XSync(display_, False);
+            XWarpPointer(display_, window_, window_, 0, 0, size().width(), size().height(), size().width() / 2, size().height() / 2);
+            XSync(display_, False);
+            skip.push_back(XEventsQueued(display_, QueuedAlready));
         }
 
         if(dispatch_event != nullptr)
@@ -151,6 +174,9 @@ void X11Window<T>::poolEvents()
             delete dispatch_event;
             dispatch_event = nullptr;
         }
+
+        for(unsigned int &i : skip)
+            i--;
     }
 }
 
@@ -186,6 +212,30 @@ void X11Window<T>::windowStateChange(XConfigureEvent event)
         size_ = Size(event.width, event.height);
         if(subscriber_ != nullptr && viewport_change_handler_ != nullptr)
             (subscriber_->*viewport_change_handler_)(size_);
+    }
+}
+
+template<class T>
+void X11Window<T>::setCursorVisibility(bool visible)
+{
+    AbstractNativeWindow<T>::setCursorVisibility(visible);
+    if(!visible)
+    {
+        XColor color = { 0, 0, 0, 0, 0, 0 };
+        const char data[] = { 0 };
+
+        Pixmap pixmap = XCreateBitmapFromData(display_, window_, data, 1, 1);
+        Cursor cursor = XCreatePixmapCursor(display_, pixmap, pixmap, &color, &color, 0, 0);
+
+        XFreePixmap(display_, pixmap);
+        XDefineCursor(display_, window_, cursor);
+        if(cursor_ != None) XFreeCursor(display_, cursor_);
+        cursor_ = cursor;
+    }
+    else
+    {
+        XUndefineCursor(display_, window_);
+        if(cursor_ != None) XFreeCursor(display_, cursor_);
     }
 }
 

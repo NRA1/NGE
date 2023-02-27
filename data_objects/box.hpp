@@ -17,9 +17,6 @@ public:
     float depth() const;
     void setDepth(float depth);
 
-    void expand(const Vertex &vertex);
-    void unite(const Box &box);
-
 private:
     float width_;
     float height_;

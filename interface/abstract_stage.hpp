@@ -12,7 +12,7 @@ public:
 
     virtual void viewportSizeChanged(Size size) = 0;
     virtual void handleEvent(Event *event) = 0;
-    virtual void render() = 0;
+    virtual void render(unsigned int time) = 0;
 
     virtual ~AbstractStage() = default;
 
