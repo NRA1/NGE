@@ -3,6 +3,28 @@
 
 bool Game::initialized_ = false;
 
+#ifdef _WIN32
+WinmainConfig Game::winmain_config_;
+void Game::initialize(WinmainConfig winmain_config)
+{
+    winmain_config_ = winmain_config;
+    if(initialized_)
+    {
+        log() - Debug < "Application already initialized";
+        return;
+    }
+
+    initialized_ = true;
+}
+
+WinmainConfig Game::winmainConfig()
+{
+    return winmain_config_;
+}
+
+#endif
+
+#ifdef __unix__
 void Game::initialize()
 {
     if(initialized_)
@@ -13,6 +35,7 @@ void Game::initialize()
 
     initialized_ = true;
 }
+#endif
 
 bool Game::initialized()
 {

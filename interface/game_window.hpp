@@ -9,6 +9,7 @@
 #include "../data_objects/size.hpp"
 #include "../native/x_11_window.hpp"
 #include "abstract_stage.hpp"
+#include "../native/abstract_native_window.hpp"
 
 class GameWindow
 {

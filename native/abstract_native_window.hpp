@@ -8,20 +8,30 @@ template<class T>
 class AbstractNativeWindow
 {
 public:
+    AbstractNativeWindow(const std::string &title, Size size);
+
+
     virtual void show() = 0;
     virtual void hide() = 0;
-    virtual bool shouldClose() = 0;
+    virtual bool shouldClose();
     virtual void poolEvents() = 0;
     virtual void swapBuffers() = 0;
-    virtual void setSubscriber(T *subscriber) = 0;
-    virtual void setViewportChangeHandler(void (T::*handler)(Size)) = 0;
-    virtual const Size &size() const = 0;
-    virtual void setEventHandler(void (T::*handler)(Event*)) = 0;
+    virtual void setSubscriber(T *subscriber);
+    virtual void setViewportChangeHandler(void (T::*handler)(Size));
+    virtual const Size &size() const;
+    virtual void setEventHandler(void (T::*handler)(Event*));
     virtual void setCursorVisibility(bool visible);
     virtual bool cursorVisible() const;
 
-private:
+protected:
+    std::string title_;
+    Size size_;
+    bool should_close_;
     bool cursor_visible_ = true;
+
+    T *subscriber_;
+    void (T::*viewport_change_handler_)(Size);
+    void (T::*event_handler_)(Event *);
 };
 
 #include "abstract_native_window.inl"

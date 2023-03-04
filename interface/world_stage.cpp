@@ -15,7 +15,7 @@ WorldStage::WorldStage() : viewport_(Size(-1, -1)), camera_(nullptr), ground_(nu
 void WorldStage::viewportSizeChanged(Size size)
 {
     viewport_ = size;
-    glViewport(0, 0, viewport_.width(), viewport_.height());
+    glViewport(0, 0, (int)viewport_.width(), (int)viewport_.height());
 }
 
 void WorldStage::render(unsigned int time)

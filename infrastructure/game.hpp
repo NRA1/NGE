@@ -3,10 +3,16 @@
 
 #include "logger.hpp"
 #include "glad/gl.h"
+#include "../data_objects/winmain_config.hpp"
 
 class Game
 {
 public:
+#ifdef _WIN32
+    static void initialize(WinmainConfig winmain_config);
+    static WinmainConfig winmainConfig();
+#endif
+
     static void initialize();
     static void shutdown();
     static bool initialized();
@@ -17,6 +23,10 @@ public:
 
 private:
     static bool initialized_;
+
+#ifdef _WIN32
+    static WinmainConfig winmain_config_;
+#endif
 };
 
 

@@ -1,7 +1,7 @@
 #pragma once
 #ifndef NGE_X_11_WINDOW_HPP
 #define NGE_X_11_WINDOW_HPP
-
+#ifdef __unix__
 #include <string>
 #include <list>
 #include <algorithm>
@@ -65,4 +65,5 @@ private:
 };
 
 #include "x_11_window.inl"
+#endif
 #endif //NGE_X_11_WINDOW_HPP

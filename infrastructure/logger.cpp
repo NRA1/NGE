@@ -197,9 +197,18 @@ Log &Log::operator>>=(const Log::Target &target)
 Log::~Log()
 {
     time_t timer = time(nullptr);
+#ifdef __unix__
+    time_t timer = time(nullptr);
     struct tm *tm = localtime(&timer);
     char buff[26];
     strftime(buff, 26, "%D %T ", tm);
+#endif
+#ifdef WIN32
+    struct tm tm;
+    localtime_s(&tm, &timer);
+    char buff[26];
+    strftime(buff, 26, "%D %T ", &tm);
+#endif
     std::string message = std::string(buff);
 
     if(level_ == LogLevel::Info)
@@ -233,8 +242,18 @@ Log::~Log()
             }
         }
     }
-    if(target_.code_ == 1)
+    if (target_.code_ == 1)
     {
+#ifndef WIN32
         std::cout << message << std::endl;
+#endif
+#ifdef WIN32
+#ifndef DEBUG
+        std::cout << message << std::endl;
+#endif
+#ifdef DEBUG
+        OutputDebugString((message + '\n').c_str());
+#endif
+#endif
     }
 }

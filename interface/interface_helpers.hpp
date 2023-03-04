@@ -7,6 +7,7 @@
 #include "../infrastructure/logger.hpp"
 #include <glm/trigonometric.hpp>
 
+#undef interface
 namespace interface
 {
     PositionedBox axisAlignedBoundingBox(const Vec3 &pos, const Rotation &rot, const PositionedBox &bounds);

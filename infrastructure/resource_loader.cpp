@@ -38,10 +38,17 @@ std::optional<Image> ResourceLoader::loadImageFromFile(const std::string &file)
 {
     std::filesystem::path path = fullPath(file);
     int width, height, nr_components;
-    unsigned char *data = stbi_load(path.c_str(), &width, &height, &nr_components, 0);
+#ifdef __unix__
+    const char *c_path = path.c_str();
+#endif
+#ifdef WIN32
+    std::string str = path.string();
+    const char *c_path = str.c_str();
+#endif
+    unsigned char *data = stbi_load(c_path, &width, &height, &nr_components, 0);
     if(!data)
     {
-        log() - Critical < "Failed to load image from path" < path;
+        log() - Critical < "Failed to load image from path" < path.string();
         stbi_image_free(data);
         return std::nullopt;
     }
@@ -53,9 +60,20 @@ std::filesystem::path ResourceLoader::fullPath(const std::string &path)
     std::filesystem::path full_path;
     if(path.starts_with(":/"))
     {
-        full_path = resourcesBasePath() / path.substr(2);
+        std::string actual_path = path.substr(2);
+#if WIN32
+        std::replace(actual_path.begin(), actual_path.end(), '/', '\\');
+#endif
+        full_path = resourcesBasePath() / actual_path;
     }
-    else full_path = std::filesystem::path(path);
+    else
+    {
+        std::string actual_path = path;
+#if WIN32
+        std::replace(actual_path.begin(), actual_path.end(), '/', '\\');
+#endif
+        full_path = std::filesystem::path(actual_path);
+    }
     return full_path;
 }
 
@@ -105,7 +123,7 @@ Texture *ResourceLoader::textureFromImage(Image &image, const std::string &type,
     unsigned int texture_id;
     glGenTextures(1, &texture_id);
 
-    GLenum format;
+    GLenum format = GL_NONE;
     if(image.nrComponents() == 1) format = GL_RED;
     else if(image.nrComponents() == 3) format = GL_RGB;
     else if(image.nrComponents() == 4) format = GL_RGBA;
@@ -120,6 +138,6 @@ Texture *ResourceLoader::textureFromImage(Image &image, const std::string &type,
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    return new Texture(texture_id, type, fullPath(path));
+    return new Texture(texture_id, type, fullPath(path).string());
 }
 

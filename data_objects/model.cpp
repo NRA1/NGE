@@ -2,7 +2,7 @@
 
 Model::Model(const std::string &path)
 {
-    loadModel(ResourceLoader::fullPath(path));
+    loadModel(ResourceLoader::fullPath(path).string());
     calculateBoundingBox();
 }
 
@@ -23,7 +23,7 @@ void Model::loadModel(const std::string& path)
         log() - Critical < "Failed to load model from path" < path < "Reason:" < importer.GetErrorString();
         return;
     }
-    directory_ = path.substr(0, path.find_last_of('/'));
+    directory_ = path.substr(0, path.find_last_of(DIRECTORY_SEPARATOR));
 
     processNode(scene->mRootNode, scene);
 }

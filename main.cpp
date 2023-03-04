@@ -1,12 +1,14 @@
 #include "infrastructure/logger.hpp"
 #include "infrastructure/game.hpp"
 #include "data_objects/size.hpp"
-#include "interface/window.hpp"
+#include "interface/game_window.hpp"
 #include "interface/world_stage.hpp"
 #include "world/object.hpp"
 #include "world/mesh_component.hpp"
 #include "world/input_component.hpp"
 #include "world/debug_box.hpp"
+
+void run();
 
 namespace delegates
 {
@@ -125,11 +127,33 @@ namespace delegates
     }
 }
 
+#ifdef __unix__
 int main()
+{
+    Game::initialize();
+    run();
+}
+#endif
+#ifdef _WIN32
+#include <windows.h>
+
+int APIENTRY WinMain(HINSTANCE hinst, HINSTANCE hinstprev, PSTR cmdline, int cmdshow)
+{
+    WinmainConfig config;
+    config.Instance = hinst;
+    config.PrevInstance = hinstprev;
+    config.CmdLine = cmdline;
+    config.ShowCmd = cmdshow;
+
+    Game::initialize(config);
+    run();
+}
+#endif
+
+void run()
 {
     try
     {
-        Game::initialize();
         GameWindow *window = new GameWindow("NGE", 1000, 700, 0);
         WorldStage *stage = new WorldStage();
         Object *object = new Object("player");
