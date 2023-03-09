@@ -248,12 +248,7 @@ Log::~Log()
         std::cout << message << std::endl;
 #endif
 #ifdef WIN32
-#ifndef DEBUG
-        std::cout << message << std::endl;
-#endif
-#ifdef DEBUG
         OutputDebugString((message + '\n').c_str());
-#endif
 #endif
     }
 }

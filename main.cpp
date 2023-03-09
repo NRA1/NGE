@@ -43,40 +43,40 @@ namespace delegates
             }
             else
             {
-                if(ev->key() == Key::KeySpace)
-                {
-                    stage->camera()->motionVector()->destroyManipulationObject(mmo);
-                    mmo = nullptr;
-                    stage->camera()->setTargetObject(stage->findObjectByName("player"));
-                    camera_tracks = true;
-                }
-                if(!ev->isRepeated())
-                {
-                    if(ev->key() == Key::KeyLeft)
-                    {
-                        std::optional<Rotation> rot = mmo->rotation();
-                        if(!rot.has_value()) rot = Rotation(0, 0, 0);
-                        mmo->setRotation(rot.value() + Rotation(5, 0, 0));
-                    }
-                    else if(ev->key() == Key::KeyRight)
-                    {
-                        std::optional<Rotation> rot = mmo->rotation();
-                        if(!rot.has_value()) rot = Rotation(0, 0, 0);
-                        mmo->setRotation(rot.value() + Rotation(-5, 0, 0));
-                    }
-                    else if(ev->key() == Key::KeyUp)
-                    {
-                        std::optional<Rotation> rot = mmo->rotation();
-                        if(!rot.has_value()) rot = Rotation(0, 0, 0);
-                        mmo->setRotation(rot.value() + Rotation(0, 0, 5));
-                    }
-                    else if(ev->key() == Key::KeyDown)
-                    {
-                        std::optional<Rotation> rot = mmo->rotation();
-                        if(!rot.has_value()) rot = Rotation(0, 0, 0);
-                        mmo->setRotation(rot.value() + Rotation(0, 0, -5));
-                    }
-                }
+                //if(ev->key() == Key::KeySpace)
+                //{
+                //    //stage->camera()->motionVector()->destroyManipulationObject(mmo);
+                //    //mmo = nullptr;
+                //    //stage->camera()->setTargetObject(stage->findObjectByName("player"));
+                //    //camera_tracks = true;
+                //}
+                //if(!ev->isRepeated())
+                //{
+                //    if(ev->key() == Key::KeyLeft)
+                //    {
+                //        std::optional<Rotation> rot = mmo->rotation();
+                //        if(!rot.has_value()) rot = Rotation(0, 0, 0);
+                //        mmo->setRotation(rot.value() + Rotation(5, 0, 0));
+                //    }
+                //    else if(ev->key() == Key::KeyRight)
+                //    {
+                //        std::optional<Rotation> rot = mmo->rotation();
+                //        if(!rot.has_value()) rot = Rotation(0, 0, 0);
+                //        mmo->setRotation(rot.value() + Rotation(-5, 0, 0));
+                //    }
+                //    else if(ev->key() == Key::KeyUp)
+                //    {
+                //        std::optional<Rotation> rot = mmo->rotation();
+                //        if(!rot.has_value()) rot = Rotation(0, 0, 0);
+                //        mmo->setRotation(rot.value() + Rotation(0, 0, 5));
+                //    }
+                //    else if(ev->key() == Key::KeyDown)
+                //    {
+                //        std::optional<Rotation> rot = mmo->rotation();
+                //        if(!rot.has_value()) rot = Rotation(0, 0, 0);
+                //        mmo->setRotation(rot.value() + Rotation(0, 0, -5));
+                //    }
+                //}
             }
         }
         else if(event->type() == KeyReleaseEventType)
@@ -87,33 +87,33 @@ namespace delegates
                 Object *player = stage->findObjectByName("player");
                 player->keyReleaseEvent(ev);
             }
-            else
-            {
-                if(ev->key() == Key::KeyLeft)
-                {
-                    std::optional<Rotation> rot = mmo->rotation();
-                    if(!rot.has_value()) rot = Rotation(0, 0, 0);
-                    mmo->setRotation(rot.value() + Rotation(-5, 0, 0));
-                }
-                else if(ev->key() == Key::KeyRight)
-                {
-                    std::optional<Rotation> rot = mmo->rotation();
-                    if(!rot.has_value()) rot = Rotation(0, 0, 0);
-                    mmo->setRotation(rot.value() + Rotation(5, 0, 0));
-                }
-                else if(ev->key() == Key::KeyUp)
-                {
-                    std::optional<Rotation> rot = mmo->rotation();
-                    if(!rot.has_value()) rot = Rotation(0, 0, 0);
-                    mmo->setRotation(rot.value() + Rotation(0, 0, -5));
-                }
-                else if(ev->key() == Key::KeyDown)
-                {
-                    std::optional<Rotation> rot = mmo->rotation();
-                    if(!rot.has_value()) rot = Rotation(0, 0, 0);
-                    mmo->setRotation(rot.value() + Rotation(0, 0, 5));
-                }
-            }
+            //else
+            //{
+            //    if(ev->key() == Key::KeyLeft)
+            //    {
+            //        std::optional<Rotation> rot = mmo->rotation();
+            //        if(!rot.has_value()) rot = Rotation(0, 0, 0);
+            //        mmo->setRotation(rot.value() + Rotation(-5, 0, 0));
+            //    }
+            //    else if(ev->key() == Key::KeyRight)
+            //    {
+            //        std::optional<Rotation> rot = mmo->rotation();
+            //        if(!rot.has_value()) rot = Rotation(0, 0, 0);
+            //        mmo->setRotation(rot.value() + Rotation(5, 0, 0));
+            //    }
+            //    else if(ev->key() == Key::KeyUp)
+            //    {
+            //        std::optional<Rotation> rot = mmo->rotation();
+            //        if(!rot.has_value()) rot = Rotation(0, 0, 0);
+            //        mmo->setRotation(rot.value() + Rotation(0, 0, -5));
+            //    }
+            //    else if(ev->key() == Key::KeyDown)
+            //    {
+            //        std::optional<Rotation> rot = mmo->rotation();
+            //        if(!rot.has_value()) rot = Rotation(0, 0, 0);
+            //        mmo->setRotation(rot.value() + Rotation(0, 0, 5));
+            //    }
+            //}
         }
         else if(event->type() == MouseMoveEventType)
         {
@@ -137,7 +137,7 @@ int main()
 #ifdef _WIN32
 #include <windows.h>
 
-int APIENTRY WinMain(HINSTANCE hinst, HINSTANCE hinstprev, PSTR cmdline, int cmdshow)
+int APIENTRY WinMain(_In_ HINSTANCE hinst, _In_opt_ HINSTANCE hinstprev, _In_ PSTR cmdline, _In_ int cmdshow)
 {
     WinmainConfig config;
     config.Instance = hinst;
@@ -172,7 +172,7 @@ void run()
         colider->addComponent(colider_comp);
         stage->addObject(colider);
         Object *arena = new Object("arena");
-        MeshComponent *arena_comp = new MeshComponent("mesh", ":/models/arena/arena.obj");
+        MeshComponent *arena_comp = new MeshComponent("mesh", ":/models/arena/arena.fbx");
         arena->addComponent(arena_comp);
         arena->setPosition(Vec3(600, 0, -600));
         stage->addObject(arena);
