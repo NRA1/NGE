@@ -7,6 +7,7 @@
 #include "world/mesh_component.hpp"
 #include "world/input_component.hpp"
 #include "world/debug_box.hpp"
+#include "game/npc_component.hpp"
 
 void run();
 
@@ -21,7 +22,7 @@ namespace delegates
     void inputDelegate(WorldStage *stage, Event *event)
     {
         static bool camera_tracks = true;
-        static MotionManipulationObject *mmo = nullptr;
+//        static MotionManipulationObject *mmo = nullptr;
         if(event->type() == KeyPressEventType)
         {
             KeyPressEvent *ev = (KeyPressEvent*)event;
@@ -168,8 +169,10 @@ void run()
         stage->addObject(object);
         Object *colider = new Object("tmpColliderObj");
         MeshComponent *colider_comp = new MeshComponent("mesh", ":/models/bot/bot4.obj");
+        NPCComponent *collider_npc = new NPCComponent("npc");
         colider->setPosition(Vec3(200, 0, 200));
         colider->addComponent(colider_comp);
+        colider->addComponent(collider_npc);
         stage->addObject(colider);
         Object *arena = new Object("arena");
         MeshComponent *arena_comp = new MeshComponent("mesh", ":/models/arena/arena.fbx");

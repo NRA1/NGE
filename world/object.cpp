@@ -17,6 +17,8 @@ void Object::addComponent(AbstractComponent *component)
         mesh_components_.push_back((AbstractMeshComponent*)component);
     if(component->type() & AbstractInputComponentType)
         input_components_.push_back((AbstractInputComponent*)component);
+    if(component->type() & AbstractNPCComponentType)
+        npc_components_.push_back((AbstractNPCComponent*)component);
     features_ |= component->type();
 }
 
@@ -25,11 +27,12 @@ void Object::removeComponent(const std::string &name)
     AbstractComponent *component = removeComponentFromVector<AbstractComponent>(components_, name);
     if(component->type() & AbstractMeshComponentType) removeComponentFromVector<AbstractMeshComponent>(mesh_components_, name);
     if(component->type() & AbstractInputComponentType) removeComponentFromVector<AbstractInputComponent>(input_components_, name);
+    if(component->type() & AbstractNPCComponentType) removeComponentFromVector<AbstractNPCComponent>(npc_components_, name);
 
     delete component;
 }
 
-int Object::features() const
+unsigned int Object::features() const
 {
     return features_;
 }
@@ -50,7 +53,6 @@ void Object::render()
 {
     for (AbstractMeshComponent *component : mesh_components_)
         component->render();
-
 }
 
 void Object::keyPressEvent(KeyPressEvent *event)
@@ -146,6 +148,12 @@ void Object::setUserTypes(int types)
 const std::string &Object::name() const
 {
     return name_;
+}
+
+void Object::tick()
+{
+    for(auto component : npc_components_)
+        component->tick();
 }
 
 

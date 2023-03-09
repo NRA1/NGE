@@ -28,22 +28,14 @@ public:
 
     void show() override;
     void hide() override;
-    bool shouldClose() override;
     void poolEvents() override;
     void swapBuffers() override;
-    void setSubscriber(T *subscriber) override;
-    void setViewportChangeHandler(void (T::*handler)(Size)) override;
-    void setEventHandler(void (T::*handler)(Event*)) override;
-    const Size &size() const override;
     void setCursorVisibility(bool visible) override;
 
     ~X11Window();
 
 private:
     void windowStateChange(XConfigureEvent event);
-
-    std::string title_;
-    Size size_;
 
     Display *display_;
     int screen_;
@@ -53,12 +45,6 @@ private:
 
     GLXContext context_;
     Colormap colormap_;
-
-    bool should_close_;
-
-    T *subscriber_;
-    void (T::*viewport_change_handler_)(Size);
-    void (T::*event_handler_)(Event *);
 
     std::list<unsigned int> pressed_keys_;
     int pressed_modifiers_;

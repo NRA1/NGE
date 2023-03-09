@@ -8,7 +8,8 @@ enum ComponentType
     AbstractMeshComponentType = 0b0000000100000000,
     MeshComponentType = 0b0000000100000001,
     AbstractInputComponentType = 0b0000001000000000,
-    InputComponentType = 0b0000001000000001
+    InputComponentType = 0b0000001000000001,
+    AbstractNPCComponentType = 0b0000010000000000
 };
 
 #endif //NGE_COMPONENT_TYPE_HPP

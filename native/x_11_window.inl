@@ -1,12 +1,11 @@
-#include "../interface/window.hpp"
+#include "../interface/game_window.hpp"
 #include "../data_objects/events/key_release_event.hpp"
 #include "../data_objects/events/mouse_move_event.hpp"
 
 template <class T>
-X11Window<T>::X11Window(const std::string& title, Size size) : title_(title), size_(size), cursor_(None),
-                                                               should_close_(false), subscriber_(nullptr),
-                                                               viewport_change_handler_(nullptr),
-                                                               event_handler_(nullptr), pressed_modifiers_(NoModifier)
+X11Window<T>::X11Window(const std::string& title, Size size)
+        : AbstractNativeWindow<T>(title, size),
+          cursor_(None), pressed_modifiers_(Modifier::NoModifier)
 {
     display_ = XOpenDisplay((char*)nullptr);
     if(display_ == nullptr)
@@ -26,7 +25,7 @@ X11Window<T>::X11Window(const std::string& title, Size size) : title_(title), si
     attributes.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask | StructureNotifyMask;
     attributes.colormap = colormap_;
 
-    window_ = XCreateWindow(display_, root, 0, 0, size_.width(), size_.height(), 0, DefaultDepth(display_, screen_),
+    window_ = XCreateWindow(display_, root, 0, 0, this->size().width(), this->size().height(), 0, DefaultDepth(display_, screen_),
                                  InputOutput, visual, CWColormap | CWEventMask, &attributes);
     XSetWMProtocols(display_, window_, &wm_delete_window_, 1);
     XStoreName(display_, window_, title.c_str());
@@ -78,13 +77,7 @@ X11Window<T>::X11Window(const std::string& title, Size size) : title_(title), si
 
     XWindowAttributes gwa;
     XGetWindowAttributes(display_, window_, &gwa);
-    size_ = Size(gwa.width, gwa.height);
-}
-
-template<class T>
-const Size &X11Window<T>::size() const
-{
-    return size_;
+    this->size_ = Size(gwa.width, gwa.height);
 }
 
 template <class T>
@@ -102,12 +95,6 @@ void X11Window<T>::hide()
 }
 
 template <class T>
-bool X11Window<T>::shouldClose()
-{
-    return should_close_;
-}
-
-template <class T>
 void X11Window<T>::poolEvents()
 {
     XEvent event;
@@ -115,7 +102,7 @@ void X11Window<T>::poolEvents()
     {
         if(((long unsigned int)event.xclient.data.l[0]) == wm_delete_window_)
         {
-            should_close_ = true;
+            this->should_close_ = true;
             return;
         }
     }
@@ -134,7 +121,7 @@ void X11Window<T>::poolEvents()
             Key key = native::nativeToKey(sym);
             if(key == KeyEscape)
             {
-                should_close_ = true;
+                this->should_close_ = true;
                 return;
             }
             int modifiers = pressed_modifiers_;
@@ -158,18 +145,18 @@ void X11Window<T>::poolEvents()
         }
         else if(event.type == MotionNotify)
         {
-            dispatch_event = new MouseMoveEvent(event.xmotion.x - size().width() / 2, event.xmotion.y - size().height() / 2, pressed_modifiers_);
+            dispatch_event = new MouseMoveEvent(event.xmotion.x - this->size().width() / 2, event.xmotion.y - this->size().height() / 2, pressed_modifiers_);
             XSync(display_, False);
-            XWarpPointer(display_, window_, window_, 0, 0, size().width(), size().height(), size().width() / 2, size().height() / 2);
+            XWarpPointer(display_, window_, window_, 0, 0, this->size().width(), this->size().height(), this->size().width() / 2, this->size().height() / 2);
             XSync(display_, False);
             skip.push_back(XEventsQueued(display_, QueuedAlready));
         }
 
         if(dispatch_event != nullptr)
         {
-            if(subscriber_ == nullptr) log() - Debug < "No subscriber set, ignoring event";
-            else if(event_handler_ == nullptr) log() - Debug < "Not event handler set, ignoring event";
-            else (subscriber_->*event_handler_)(dispatch_event);
+            if(this->subscriber_ == nullptr) log() - Debug < "No subscriber set, ignoring event";
+            else if(this->event_handler_ == nullptr) log() - Debug < "Not event handler set, ignoring event";
+            else (this->subscriber_->*this->event_handler_)(dispatch_event);
 
             delete dispatch_event;
             dispatch_event = nullptr;
@@ -187,31 +174,13 @@ void X11Window<T>::swapBuffers()
 }
 
 template<class T>
-void X11Window<T>::setSubscriber(T *subscriber)
-{
-    subscriber_ = subscriber;
-}
-
-template <class T>
-void X11Window<T>::setViewportChangeHandler(void (T::*handler)(Size))
-{
-    viewport_change_handler_ = handler;
-}
-
-template<class T>
-void X11Window<T>::setEventHandler(void (T::*handler)(Event *))
-{
-    event_handler_ = handler;
-}
-
-template<class T>
 void X11Window<T>::windowStateChange(XConfigureEvent event)
 {
-    if(event.height != size_.height() || event.width != size_.width())
+    if(event.height != this->size_.height() || event.width != this->size_.width())
     {
-        size_ = Size(event.width, event.height);
-        if(subscriber_ != nullptr && viewport_change_handler_ != nullptr)
-            (subscriber_->*viewport_change_handler_)(size_);
+        this->size_ = Size(event.width, event.height);
+        if(this->subscriber_ != nullptr && this->viewport_change_handler_ != nullptr)
+            (this->subscriber_->*this->viewport_change_handler_)(this->size_);
     }
 }
 

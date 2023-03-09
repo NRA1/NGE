@@ -198,7 +198,6 @@ Log::~Log()
 {
     time_t timer = time(nullptr);
 #ifdef __unix__
-    time_t timer = time(nullptr);
     struct tm *tm = localtime(&timer);
     char buff[26];
     strftime(buff, 26, "%D %T ", tm);

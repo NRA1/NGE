@@ -11,6 +11,7 @@
 #include "../data_objects/motion_vector.hpp"
 #include "../data_objects/events/mouse_move_event.hpp"
 #include "../data_objects/positioned_box.hpp"
+#include "abstractions/abstract_npc_component.hpp"
 
 class WorldStage;
 class AbstractComponent;
@@ -22,7 +23,7 @@ public:
 
     void addComponent(AbstractComponent *component);
     void removeComponent(const std::string &name);
-    [[nodiscard]] int features() const;
+    [[nodiscard]] unsigned int features() const;
 
     [[nodiscard]] const Vec3 &position() const;
     void setPosition(const Vec3 &position);
@@ -42,6 +43,8 @@ public:
     virtual void unload();
     virtual void render();
 
+    virtual void tick();
+
     void keyPressEvent(KeyPressEvent *event);
     void keyReleaseEvent(KeyReleaseEvent *event);
     void mouseMoveEvent(MouseMoveEvent *event);
@@ -55,8 +58,9 @@ private:
     std::vector<AbstractComponent*> components_;
     std::vector<AbstractMeshComponent*> mesh_components_;
     std::vector<AbstractInputComponent*> input_components_;
+    std::vector<AbstractNPCComponent*> npc_components_;
 
-    int features_;
+    unsigned int features_;
     int collision_damage_;
     int user_types_;
     std::string name_;

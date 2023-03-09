@@ -1,7 +1,7 @@
 #pragma once
 #ifndef NGE_WIN_32_WINDOW_HPP
 #define NGE_WIN_32_WINDOW_HPP
-
+#ifdef WIN32
 #include <string>
 #include <windows.h>
 #include <Windowsx.h>
@@ -47,4 +47,5 @@ private:
 
 #include "win_32_window.inl"
 
+#endif
 #endif //NGE_WIN_32_WINDOW_HPP
