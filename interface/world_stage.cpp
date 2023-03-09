@@ -3,7 +3,7 @@
 #include "../world/debug_box.hpp"
 
 WorldStage::WorldStage() : viewport_(Size(-1, -1)), camera_(nullptr), ground_(nullptr), shader_program_(nullptr),
-                           collision_delegate_(nullptr)
+                           collision_delegate_(nullptr), input_delegate_(nullptr), offwold_delegate_(nullptr)
 {
 #if DISPLAY_COLLIDERS
     collider_display_ = new DebugBox("colliderDisplay", PositionedBox(0, 0, 0, 0, 0, 0));
@@ -69,8 +69,9 @@ void WorldStage::removeObject(Object *object)
         if(objects_[i] == object)
         {
             objects_.erase(objects_.begin() + i);
-            objects_[i]->setStage(nullptr);
-            delete objects_[i];
+            object->setStage(nullptr);
+            delete object;
+            return;
         }
     }
 }
@@ -138,6 +139,11 @@ void WorldStage::applyPhysics(unsigned int time)
         distance = Vec3(rotation_mat * Vec4(distance, 1));
         PositionedBox aabb = interface::axisAlignedBoundingBox(obj->position() + distance, physics_rot, obj->boundingBox());
 
+        if(ground_ != nullptr)
+            if(!interface::checkCollision(aabb.x(), aabb.x() + aabb.width(), -(ground_->bounds().width() / 2), ground_->bounds().width() / 2)
+               || !interface::checkCollision(aabb.z(), aabb.z() + aabb.depth(), -(ground_->bounds().height() / 2), ground_->bounds().height() / 2))
+                if(offwold_delegate_ != nullptr && offwold_delegate_(this, obj)) return;
+
 #if DISPLAY_COLLIDERS
         collider_boxes_.push_back(aabb);
 #endif
@@ -156,7 +162,7 @@ void WorldStage::applyPhysics(unsigned int time)
                && interface::checkCollision(aabb.y(), aabb.y() + aabb.height(), collider_aabb.y(), collider_aabb.y() + collider_aabb.height())
                && interface::checkCollision(aabb.z(), aabb.z() + aabb.depth(), collider_aabb.z(), collider_aabb.z() + collider_aabb.depth()))
             {
-                if(collision_delegate_(this, obj, collider)) return;
+                if(collision_delegate_ != nullptr && collision_delegate_(this, obj, collider)) return;
             }
         }
 
@@ -220,4 +226,9 @@ Object *WorldStage::findObjectByName(const std::string &name) const
     auto iter = std::find_if(objects_.begin(), objects_.end(), [name](Object *obj) { return obj->name() == name; });
     if(iter == std::end(objects_)) return nullptr;
     return *iter;
+}
+
+void WorldStage::setOffworldDelegate(bool (*offworld_delegate)(WorldStage *, Object *))
+{
+    offwold_delegate_ = offworld_delegate;
 }

@@ -5,6 +5,7 @@
 void NPCComponent::tick()
 {
     Object *player = object()->stage()->findObjectByName("player");
+    if(player == nullptr) return;
     Vec3 vec = object()->position();
     vec = player->position() - vec;
     float len = glm::length(vec);
@@ -13,7 +14,6 @@ void NPCComponent::tick()
     if(vec.z < 0 && vec.x > 0) rot = 360 - rot;
     else if(vec.z < 0 && vec.x < 0) rot = 180 + rot;
     else if(vec.z > 0 && vec.x < 0) rot = 180 - rot;
-    log() - Info < rot;
     Rotation r = object()->rotation();
     r.setRoll(-rot + 90);
     object()->setRotation(r);

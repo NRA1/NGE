@@ -34,7 +34,8 @@ public:
     void setCamera(Camera *camera);
     void setGround(Ground *ground);
     void setCollisionDelegate(bool (*collision_delegate)(WorldStage *, Object *, Object *));
-    void setInputDelegate(void (*inputDelegate)(WorldStage *, Event *));
+    void setInputDelegate(void (*input_delegate)(WorldStage *, Event *));
+    void setOffworldDelegate(bool (*offworld_delegate)(WorldStage *, Object *));
 
     Object *findObjectByName(const std::string &name) const;
 
@@ -64,6 +65,7 @@ private:
 
     bool (*collision_delegate_)(WorldStage *stage, Object *object, Object *collider);
     void (*input_delegate_)(WorldStage *stage, Event *event);
+    bool (*offwold_delegate_)(WorldStage *stage, Object *event);
 };
 
 

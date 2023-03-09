@@ -39,6 +39,7 @@ namespace delegates
                 else
                 {
                     Object *player = stage->findObjectByName("player");
+                    if(player == nullptr) return;
                     player->keyPressEvent(ev);
                 }
             }
@@ -86,6 +87,7 @@ namespace delegates
             if(camera_tracks)
             {
                 Object *player = stage->findObjectByName("player");
+                if(player == nullptr) return;
                 player->keyReleaseEvent(ev);
             }
             //else
@@ -122,9 +124,16 @@ namespace delegates
             if(camera_tracks)
             {
                 Object *player = stage->findObjectByName("player");
+                if(player == nullptr) return;
                 player->mouseMoveEvent(ev);
             }
         }
+    }
+
+    bool offworldDelegate(WorldStage *stage, Object *obj)
+    {
+        stage->removeObject(obj);
+        return true;
     }
 }
 
@@ -182,6 +191,7 @@ void run()
         stage->setCamera(camera);
         stage->setCollisionDelegate(&delegates::collisionDelegate);
         stage->setInputDelegate(&delegates::inputDelegate);
+        stage->setOffworldDelegate(&delegates::offworldDelegate);
         stage->setGround(ground);
         window->setCursorVisibility(false);
         window->setStage(stage);
