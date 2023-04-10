@@ -4,6 +4,7 @@
 
 #include <string>
 #include "../data_objects/texture.hpp"
+#include "../data_objects/character.hpp"
 
 namespace common_fallbacks
 {
@@ -25,7 +26,7 @@ namespace common_fallbacks
                                                         "} ";
 
     Texture *defaultTexture(const std::string &type);
-
+    const Character defaultCharacter = Character(0, Vec2(0, 0), Vec2(0, 0), 0);
 }
 
 #endif //NGE_COMMON_FALLBACKS_HPP

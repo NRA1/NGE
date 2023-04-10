@@ -113,17 +113,19 @@
 //
 //
 
+#include <fstream>
 #include "logger.hpp"
 #include "glad/gl.h"
+#include "resource_loader.hpp"
 
-Log::Target Log::default_target = Target();
+Log::Target Log::default_target_ = Target();
 
 Log log()
 {
     return { };
 }
 
-Log::Log() : level_(LogLevel::Info), target_(default_target)
+Log::Log() : level_(LogLevel::Info), target_(default_target_)
 {
 
 }
@@ -250,4 +252,15 @@ Log::~Log()
         OutputDebugString((message + '\n').c_str());
 #endif
     }
+    else if(target_.code_ == 2)
+    {
+        std::ofstream file(ResourceLoader::fullPath(target_.path_), std::ios::app);
+        file << message << std::endl;
+        file.close();
+    }
+}
+
+void Log::setDefaultTarget(const Log::Target &target)
+{
+    default_target_ = target;
 }

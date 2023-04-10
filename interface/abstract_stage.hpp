@@ -11,7 +11,7 @@ public:
     virtual void onDisappearing() = 0;
 
     virtual void viewportSizeChanged(Size size) = 0;
-    virtual void handleEvent(Event *event) = 0;
+    virtual bool handleEvent(Event *event) = 0;
     virtual void render(unsigned int time) = 0;
 
     virtual ~AbstractStage() = default;

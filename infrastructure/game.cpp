@@ -1,7 +1,9 @@
 #include "game.hpp"
 #include "glad/gl.h"
+#include "resource_loader.hpp"
 
 bool Game::initialized_ = false;
+FT_Library Game::ft_;
 
 #ifdef _WIN32
 WinmainConfig Game::winmain_config_;
@@ -27,10 +29,21 @@ WinmainConfig Game::winmainConfig()
 #ifdef __unix__
 void Game::initialize()
 {
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+
+    Log::setDefaultTarget(Log::Target(":/logs/log-" + std::to_string(ltm->tm_year + 1900) + "-" + std::to_string(ltm->tm_mon + 1) + "-" + std::to_string(ltm->tm_mday)));
+
     if(initialized_)
     {
         log() - Debug < "Application already initialized";
         return;
+    }
+
+    if(FT_Init_FreeType(&ft_))
+    {
+        log() - Critical < "Could not init FreeType library. Faulting";
+        fault();
     }
 
     initialized_ = true;
@@ -44,6 +57,8 @@ bool Game::initialized()
 
 void Game::shutdown()
 {
+    cleanup();
+    exit(0);
 }
 
 void Game::fault()
@@ -89,4 +104,16 @@ void Game::openglDebugMessageCallback(GLenum, GLenum type, GLuint, GLenum severi
 
     log() - level < "OpenGL message of severity" < str_severity < "and type" < str_type + ":" < message;
     if(severity != GL_DEBUG_SEVERITY_NOTIFICATION) log() - level <<= trace;
+}
+
+const FT_Library &Game::freeType()
+{
+    return ft_;
+}
+
+void Game::cleanup()
+{
+    ResourceLoader::clearCaches();
+    FT_Done_FreeType(ft_);
+    initialized_ = false;
 }

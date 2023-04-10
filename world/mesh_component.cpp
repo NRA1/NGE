@@ -55,7 +55,6 @@ void MeshComponent::setModelPosition()
     if(!loaded_ && object() != nullptr) return;
     Mat4 model = Mat4(1.0f);
     model = glm::translate(model, object()->position());
-    model = glm::scale(model, Vec3(1.0f, 1.0f, 1.0f));
 
     std::optional<Rotation> rot = object()->motionVector().grabbedRotation();
     Rotation physics_rot;

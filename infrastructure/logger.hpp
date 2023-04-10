@@ -127,8 +127,10 @@ public:
         friend Log;
     };
 
+    static void setDefaultTarget(const Target &target);
 
     Log();
+
 
     Log &operator-(LogLevel level);
     Log &operator<(std::string string);
@@ -147,7 +149,7 @@ public:
     ~Log();
 
 private:
-    static Target default_target;
+    static Target default_target_;
 
     std::string message_;
     LogLevel level_;

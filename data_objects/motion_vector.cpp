@@ -16,6 +16,7 @@ MotionManipulationObject *MotionVector::generateManipulationObject(bool grab_rot
 void MotionVector::destroyManipulationObject(const MotionManipulationObject *object)
 {
     std::erase_if(manipulation_objects_, [object](MotionManipulationObject *x) { return x == object; });
+    delete object;
 }
 
 Vec3 MotionVector::velocity()
@@ -40,7 +41,10 @@ Vec3 MotionVector::acceleration()
 
 MotionVector::~MotionVector()
 {
-
+    for(auto &object : manipulation_objects_)
+    {
+        delete object;
+    }
 }
 
 std::optional<Rotation> MotionVector::grabbedRotation() const

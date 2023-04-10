@@ -1,6 +1,8 @@
 #include "resource_loader.hpp"
 #include "stb_image.hpp"
 
+std::map<std::tuple<std::string, char, unsigned int>, Character> ResourceLoader::character_cache_;
+
 std::optional<std::string> ResourceLoader::loadText(const std::string& file)
 {
     std::filesystem::path path = fullPath(file);
@@ -140,4 +142,75 @@ Texture *ResourceLoader::textureFromImage(Image &image, const std::string &type,
 
     return new Texture(texture_id, type, fullPath(path).string());
 }
+
+bool ResourceLoader::loadFont(const std::string &font, unsigned int size)
+{
+    if(!Game::initialized())
+    {
+        log() - Critical < "Game not initialized! Cannot load font";
+        return false;
+    }
+    FT_Face face;
+    if(FT_New_Face(Game::freeType(), fullPath(font).c_str(), 0, &face)) return false;
+    FT_Set_Pixel_Sizes(face, 0, size);
+
+    for(unsigned char c = 0; c < 128; c++)
+    {
+        if(FT_Load_Char(face, c, FT_LOAD_RENDER))
+        {
+            char ch = (char)c;
+            log() - Critical < "FreeType failed to load glyph: " + std::string(&ch);
+            continue;
+        }
+
+        unsigned int texture;
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, (int)(face->glyph->bitmap.width), (int)(face->glyph->bitmap.rows), 0,
+                     GL_RED,GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+        character_cache_.insert(
+                std::pair<std::tuple<std::string, char, unsigned int>, Character>(
+                        std::tuple<std::string, char, unsigned int>(font, c, size),
+                        Character(texture, Vec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
+                                  Vec2(face->glyph->bitmap_left, face->glyph->bitmap_top), face->glyph->advance.x))
+        );
+
+    }
+
+    FT_Done_Face(face);
+    return true;
+}
+
+const Character &ResourceLoader::loadCharacter(const std::string &font, char character, unsigned int size)
+{
+    if(!character_cache_.contains(std::tuple<std::string, char, unsigned int>(font, character, size))
+            && !loadFont(font, size))
+    {
+        log() - Critical < "Failed to load font:" < font < "Cannot load character. Falling to character fallback";
+        return common_fallbacks::defaultCharacter;
+    }
+    if(!character_cache_.contains(std::tuple<std::string, char, unsigned int>(font, character, size)))
+    {
+        log() - Critical < "Character not in cache. Failing back to character fallback";
+        return common_fallbacks::defaultCharacter;
+    }
+    return character_cache_[std::tuple<std::string, char, unsigned int>(font, character, size)];
+}
+
+void ResourceLoader::clearCaches()
+{
+    for(auto &character : character_cache_)
+        character.second.destroy();
+    character_cache_.clear();
+}
+
+
 

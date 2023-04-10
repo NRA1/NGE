@@ -7,17 +7,17 @@
 class MouseMoveEvent : public Event
 {
 public:
-    MouseMoveEvent(int x, int y, int modifiers);
+    MouseMoveEvent(float x, float y, int modifiers);
 
     int type() const override;
 
-    int x() const;
-    int y() const;
+    float x() const;
+    float y() const;
     int modifiers() const;
 
 private:
-    int x_;
-    int y_;
+    float x_;
+    float y_;
     int modifiers_;
 };
 

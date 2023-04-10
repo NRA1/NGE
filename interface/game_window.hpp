@@ -16,7 +16,7 @@ class GameWindow
 public:
     GameWindow(std::string title, int width, int height, int state);
     void exec();
-    void setStage(AbstractStage *stage);
+    void pushStage(AbstractStage *stage);
     void setCursorVisibility(bool visible);
     bool isCursorVisible();
 
@@ -30,9 +30,9 @@ private:
 
     std::string title_;
     Size size_;
-    AbstractStage *stage_;
+    std::vector<AbstractStage *> stages_;
 
-    bool shown_{};
+    bool shown_;
 };
 
 #endif //NGE_WINDOW_HPP

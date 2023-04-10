@@ -1,8 +1,8 @@
 #include "game_window.hpp"
 #include "../native/win_32_window.hpp"
 
-GameWindow::GameWindow(std::string title, int width, int height, int) :  native_(nullptr), title_(std::move(title)),
-                                                                         size_((float)width, (float)height), stage_(nullptr), shown_(false)
+GameWindow::GameWindow(std::string title, int width, int height, int) : native_(nullptr), title_(std::move(title)),
+                                                                        size_((float)width, (float)height), shown_(false)
 {
     if (!Game::initialized())
     {
@@ -31,11 +31,10 @@ void GameWindow::exec()
 {
     native_->show();
     shown_ = true;
-    if(stage_ != nullptr)
-    {
-        stage_->viewportSizeChanged(native_->size());
-        stage_->onAppearing();
-    }
+
+    viewportSizeChanged(native_->size());
+    for(auto &stage : stages_)
+        stage->onAppearing();
 
     unsigned int last_render = (unsigned int)duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
             .time_since_epoch()).count();
@@ -44,20 +43,20 @@ void GameWindow::exec()
         native_->poolEvents();
         unsigned int time = (unsigned int)duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
                 .time_since_epoch()).count();
-        if(stage_ != nullptr) stage_->render(time - last_render);
+        for(auto &stage : stages_)
+            stage->render(time - last_render);
         last_render = time;
         native_->swapBuffers();
     }
     shown_ = false;
-    if(stage_ != nullptr) stage_->onDisappearing();
+    for(auto &stage : stages_)
+        stage->onDisappearing();
 }
 
-void GameWindow::setStage(AbstractStage *stage)
+void GameWindow::pushStage(AbstractStage *stage)
 {
-    if(stage_ != nullptr && shown_) stage_->onDisappearing();
-    delete stage_;
-    stage_ = stage;
-    if(stage_ != nullptr && shown_)
+    stages_.push_back(stage);
+    if(shown_)
     {
         stage->viewportSizeChanged(native_->size());
         stage->onAppearing();
@@ -66,24 +65,26 @@ void GameWindow::setStage(AbstractStage *stage)
 
 void GameWindow::viewportSizeChanged(Size size)
 {
-    if(stage_ != nullptr)
-        stage_->viewportSizeChanged(size);
+    for(auto &stage : stages_)
+        stage->viewportSizeChanged(size);
 }
 
 void GameWindow::eventHandler(Event *event)
 {
-    if(stage_ == nullptr)
+    if(stages_.empty())
     {
         log() - Debug < "No stage set, ignoring event";
         return;
     }
 
-    stage_->handleEvent(event);
+    for(long i = (long)stages_.size() - 1; i >= 0; i--)
+        if(stages_[i]->handleEvent(event)) return;
 }
 
 GameWindow::~GameWindow()
 {
-    delete stage_;
+    for(auto &stage : stages_)
+        delete stage;
 }
 
 void GameWindow::setCursorVisibility(bool visible)

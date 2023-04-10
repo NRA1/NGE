@@ -3,7 +3,7 @@
 #include "../world/debug_box.hpp"
 
 WorldStage::WorldStage() : viewport_(Size(-1, -1)), camera_(nullptr), ground_(nullptr), shader_program_(nullptr),
-                           collision_delegate_(nullptr), input_delegate_(nullptr), offwold_delegate_(nullptr)
+                           visible_(false), collision_delegate_(nullptr), input_delegate_(nullptr), offwold_delegate_(nullptr)
 {
 #if DISPLAY_COLLIDERS
     collider_display_ = new DebugBox("colliderDisplay", PositionedBox(0, 0, 0, 0, 0, 0));
@@ -60,6 +60,8 @@ void WorldStage::addObject(Object *object)
 {
     objects_.push_back(object);
     object->setStage(this);
+    if(visible_)
+        object->load();
 }
 
 void WorldStage::removeObject(Object *object)
@@ -78,20 +80,24 @@ void WorldStage::removeObject(Object *object)
 
 void WorldStage::onAppearing()
 {
-    shader_program_ = new ShaderProgram(":/shaders/vertex.vert", ":/shaders/fragment.frag");
+    shader_program_ = new ShaderProgram(":/shaders/world/vertex.vert", ":/shaders/world/fragment.frag");
     for (Object *object : objects_)
     {
         object->load();
     }
+    visible_ = true;
 }
 
 
 void WorldStage::onDisappearing()
 {
+    visible_ = false;
     for(Object *object : objects_)
     {
         object->unload();
     }
+    delete shader_program_;
+    shader_program_ = nullptr;
 }
 
 void WorldStage::setCamera(Camera *camera)
@@ -105,13 +111,15 @@ ShaderProgram *WorldStage::shaderProgram()
     return shader_program_;
 }
 
-void WorldStage::handleEvent(Event *event)
+bool WorldStage::handleEvent(Event *event)
 {
-    if(event->type() == KeyPressEventType || event->type() == KeyReleaseEventType || event->type() == MouseMoveEventType)
+    if(event->type() == KeyPressEventType || event->type() == KeyReleaseEventType || event->type() == MouseMoveEventType
+       || event->type() == MousePressEventType || event->type() == MouseReleaseEventType)
     {
         if(input_delegate_ == nullptr) log() - Debug < "No input delegate set, ignoring input event";
-        else input_delegate_(this, event);
+        else if(input_delegate_(this, event)) return true;
     }
+    return false;
 }
 
 void WorldStage::setGround(Ground *ground)
@@ -211,7 +219,7 @@ void WorldStage::setCollisionDelegate(bool (*collision_delegate)(WorldStage *sta
     collision_delegate_ = collision_delegate;
 }
 
-void WorldStage::setInputDelegate(void (*input_delegate)(WorldStage *, Event *))
+void WorldStage::setInputDelegate(bool (*input_delegate)(WorldStage *, Event *))
 {
     input_delegate_ = input_delegate;
 }

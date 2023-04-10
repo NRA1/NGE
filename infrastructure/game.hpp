@@ -4,6 +4,7 @@
 #include "logger.hpp"
 #include "glad/gl.h"
 #include "../data_objects/winmain_config.hpp"
+#include "freetype/freetype.h"
 
 class Game
 {
@@ -21,8 +22,13 @@ public:
     static void openglDebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
                                            const GLchar *message, const void *user_param);
 
+    static const FT_Library &freeType();
+
 private:
+    static void cleanup();
+
     static bool initialized_;
+    static FT_Library ft_;
 
 #ifdef _WIN32
     static WinmainConfig winmain_config_;

@@ -4,6 +4,7 @@
 #include "abstractions/abstract_mesh_component.hpp"
 #include <vector>
 #include <string>
+#include "abstractions/abstract_component.hpp"
 #include "../enums/component_type.hpp"
 #include "../data_objects/vec.hpp"
 #include "../data_objects/rotation.hpp"
@@ -38,6 +39,7 @@ public:
     const std::string &name() const;
     int userTypes() const;
     void setUserTypes(int types);
+    AbstractComponent *findComponent(const std::string &name);
 
     virtual void load();
     virtual void unload();

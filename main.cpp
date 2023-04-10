@@ -1,3 +1,5 @@
+#include <ft2build.h>
+#include FT_FREETYPE_H
 #include "infrastructure/logger.hpp"
 #include "infrastructure/game.hpp"
 #include "data_objects/size.hpp"
@@ -8,21 +10,46 @@
 #include "world/input_component.hpp"
 #include "world/debug_box.hpp"
 #include "game/npc_component.hpp"
+#include "interface/graph_stage.hpp"
+#include "graph/rect_widget.hpp"
+#include "graph/text_widget.hpp"
+#include "world/bar_component.h"
+#include "world/property_component.h"
 
 void run();
 
 namespace delegates
 {
-    bool collisionDelegate(WorldStage *, Object *, Object *)
+    unsigned int bullet_counter = 0;
+
+    bool collisionDelegate(WorldStage *stage, Object *object, Object *collider)
     {
-//        stage->removeObject(collider);
-        return true;
+        if(object->name().starts_with("bullet"))
+        {
+            auto adamage = object->findComponent("damage");
+            if (adamage != nullptr && adamage->type() & PropertyComponentType)
+            {
+                auto alife = collider->findComponent("life");
+                if (alife != nullptr && alife->type() & BarComponentType)
+                {
+                    BarComponent *life = (BarComponent *) alife;
+                    PropertyComponent<unsigned int> *damage = (PropertyComponent<unsigned int> *) adamage;
+                    if (life->value() <= damage->value())
+                        stage->removeObject(collider);
+                    else
+                        life->adjustValue(-((int)damage->value()));
+                    stage->removeObject(object);
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
-    void inputDelegate(WorldStage *stage, Event *event)
+    bool inputDelegate(WorldStage *stage, Event *event)
     {
         static bool camera_tracks = true;
-//        static MotionManipulationObject *mmo = nullptr;
+        static MotionManipulationObject *mmo = nullptr;
         if(event->type() == KeyPressEventType)
         {
             KeyPressEvent *ev = (KeyPressEvent*)event;
@@ -30,55 +57,55 @@ namespace delegates
             {
                 if (ev->key() == Key::KeySpace)
                 {
-//                    stage->camera()->setRotation(Rotation(30, -90, 90));
-//                    stage->camera()->setPosition(Vec3(300, 500, 300));
-//                    stage->camera()->setTargetObject(nullptr);
-//                    mmo = stage->camera()->motionVector()->generateManipulationObject(true);
-//                    camera_tracks = false;
+                    stage->camera()->setRotation(Rotation(30, -90, 90));
+                    stage->camera()->setPosition(Vec3(300, 500, 300));
+                    stage->camera()->setTargetObject(nullptr);
+                    mmo = stage->camera()->motionVector()->generateManipulationObject(true);
+                    camera_tracks = false;
                 }
                 else
                 {
                     Object *player = stage->findObjectByName("player");
-                    if(player == nullptr) return;
+                    if(player == nullptr) return true;
                     player->keyPressEvent(ev);
                 }
             }
             else
             {
-                //if(ev->key() == Key::KeySpace)
-                //{
-                //    //stage->camera()->motionVector()->destroyManipulationObject(mmo);
-                //    //mmo = nullptr;
-                //    //stage->camera()->setTargetObject(stage->findObjectByName("player"));
-                //    //camera_tracks = true;
-                //}
-                //if(!ev->isRepeated())
-                //{
-                //    if(ev->key() == Key::KeyLeft)
-                //    {
-                //        std::optional<Rotation> rot = mmo->rotation();
-                //        if(!rot.has_value()) rot = Rotation(0, 0, 0);
-                //        mmo->setRotation(rot.value() + Rotation(5, 0, 0));
-                //    }
-                //    else if(ev->key() == Key::KeyRight)
-                //    {
-                //        std::optional<Rotation> rot = mmo->rotation();
-                //        if(!rot.has_value()) rot = Rotation(0, 0, 0);
-                //        mmo->setRotation(rot.value() + Rotation(-5, 0, 0));
-                //    }
-                //    else if(ev->key() == Key::KeyUp)
-                //    {
-                //        std::optional<Rotation> rot = mmo->rotation();
-                //        if(!rot.has_value()) rot = Rotation(0, 0, 0);
-                //        mmo->setRotation(rot.value() + Rotation(0, 0, 5));
-                //    }
-                //    else if(ev->key() == Key::KeyDown)
-                //    {
-                //        std::optional<Rotation> rot = mmo->rotation();
-                //        if(!rot.has_value()) rot = Rotation(0, 0, 0);
-                //        mmo->setRotation(rot.value() + Rotation(0, 0, -5));
-                //    }
-                //}
+                if(ev->key() == Key::KeySpace)
+                {
+                    stage->camera()->motionVector()->destroyManipulationObject(mmo);
+                    mmo = nullptr;
+                    stage->camera()->setTargetObject(stage->findObjectByName("player"));
+                    camera_tracks = true;
+                }
+                if(!ev->isRepeated())
+                {
+                    if(ev->key() == Key::KeyLeft)
+                    {
+                        std::optional<Rotation> rot = mmo->rotation();
+                        if(!rot.has_value()) rot = Rotation(0, 0, 0);
+                        mmo->setRotation(rot.value() + Rotation(5, 0, 0));
+                    }
+                    else if(ev->key() == Key::KeyRight)
+                    {
+                        std::optional<Rotation> rot = mmo->rotation();
+                        if(!rot.has_value()) rot = Rotation(0, 0, 0);
+                        mmo->setRotation(rot.value() + Rotation(-5, 0, 0));
+                    }
+                    else if(ev->key() == Key::KeyUp)
+                    {
+                        std::optional<Rotation> rot = mmo->rotation();
+                        if(!rot.has_value()) rot = Rotation(0, 0, 0);
+                        mmo->setRotation(rot.value() + Rotation(0, 0, 5));
+                    }
+                    else if(ev->key() == Key::KeyDown)
+                    {
+                        std::optional<Rotation> rot = mmo->rotation();
+                        if(!rot.has_value()) rot = Rotation(0, 0, 0);
+                        mmo->setRotation(rot.value() + Rotation(0, 0, -5));
+                    }
+                }
             }
         }
         else if(event->type() == KeyReleaseEventType)
@@ -87,36 +114,36 @@ namespace delegates
             if(camera_tracks)
             {
                 Object *player = stage->findObjectByName("player");
-                if(player == nullptr) return;
+                if(player == nullptr) return true;
                 player->keyReleaseEvent(ev);
             }
-            //else
-            //{
-            //    if(ev->key() == Key::KeyLeft)
-            //    {
-            //        std::optional<Rotation> rot = mmo->rotation();
-            //        if(!rot.has_value()) rot = Rotation(0, 0, 0);
-            //        mmo->setRotation(rot.value() + Rotation(-5, 0, 0));
-            //    }
-            //    else if(ev->key() == Key::KeyRight)
-            //    {
-            //        std::optional<Rotation> rot = mmo->rotation();
-            //        if(!rot.has_value()) rot = Rotation(0, 0, 0);
-            //        mmo->setRotation(rot.value() + Rotation(5, 0, 0));
-            //    }
-            //    else if(ev->key() == Key::KeyUp)
-            //    {
-            //        std::optional<Rotation> rot = mmo->rotation();
-            //        if(!rot.has_value()) rot = Rotation(0, 0, 0);
-            //        mmo->setRotation(rot.value() + Rotation(0, 0, -5));
-            //    }
-            //    else if(ev->key() == Key::KeyDown)
-            //    {
-            //        std::optional<Rotation> rot = mmo->rotation();
-            //        if(!rot.has_value()) rot = Rotation(0, 0, 0);
-            //        mmo->setRotation(rot.value() + Rotation(0, 0, 5));
-            //    }
-            //}
+            else
+            {
+                if(ev->key() == Key::KeyLeft)
+                {
+                    std::optional<Rotation> rot = mmo->rotation();
+                    if(!rot.has_value()) rot = Rotation(0, 0, 0);
+                    mmo->setRotation(rot.value() + Rotation(-5, 0, 0));
+                }
+                else if(ev->key() == Key::KeyRight)
+                {
+                    std::optional<Rotation> rot = mmo->rotation();
+                    if(!rot.has_value()) rot = Rotation(0, 0, 0);
+                    mmo->setRotation(rot.value() + Rotation(5, 0, 0));
+                }
+                else if(ev->key() == Key::KeyUp)
+                {
+                    std::optional<Rotation> rot = mmo->rotation();
+                    if(!rot.has_value()) rot = Rotation(0, 0, 0);
+                    mmo->setRotation(rot.value() + Rotation(0, 0, -5));
+                }
+                else if(ev->key() == Key::KeyDown)
+                {
+                    std::optional<Rotation> rot = mmo->rotation();
+                    if(!rot.has_value()) rot = Rotation(0, 0, 0);
+                    mmo->setRotation(rot.value() + Rotation(0, 0, 5));
+                }
+            }
         }
         else if(event->type() == MouseMoveEventType)
         {
@@ -124,10 +151,30 @@ namespace delegates
             if(camera_tracks)
             {
                 Object *player = stage->findObjectByName("player");
-                if(player == nullptr) return;
+                if(player == nullptr) return true;
                 player->mouseMoveEvent(ev);
             }
         }
+        else if(event->type() == MousePressEventType)
+        {
+            Object *player = stage->findObjectByName("player");
+            if(player == nullptr) return false;
+            Mat4 mat = Mat4(1);
+            mat = glm::rotate(mat, glm::radians(360 - player->rotation().roll()), Vec3(0, 1, 0));
+            Vec4 rel_start_pos = Vec4(0, 0, 50, 0) * mat;
+            Object *bullet = new Object("bullet" + std::to_string(bullet_counter++));
+            bullet->setPosition(Vec3(player->position().x + rel_start_pos.x, player->position().y + rel_start_pos.y,
+                                     player->position().z + rel_start_pos.z));
+            MeshComponent *mesh_comp = new MeshComponent("mesh", ":/models/bullet/bullet.obj");
+            bullet->addComponent(mesh_comp);
+            PropertyComponent<unsigned int> *damage_component = new PropertyComponent<unsigned int>("damage", 30);
+            bullet->addComponent(damage_component);
+            stage->addObject(bullet);
+            auto mvo = bullet->motionVector().generateManipulationObject(false);
+            Vec4 rotated = Vec4(0, 0, 200, 0) * mat;
+            mvo->setVelocity(rotated);
+        }
+        return true;
     }
 
     bool offworldDelegate(WorldStage *stage, Object *obj)
@@ -182,10 +229,12 @@ void run()
         colider->setPosition(Vec3(200, 0, 200));
         colider->addComponent(colider_comp);
         colider->addComponent(collider_npc);
-        stage->addObject(colider);
+//        stage->addObject(colider);
         Object *arena = new Object("arena");
         MeshComponent *arena_comp = new MeshComponent("mesh", ":/models/arena/arena.fbx");
         arena->addComponent(arena_comp);
+        BarComponent *arena_life_bar = new BarComponent("life", 100, 100);
+        arena->addComponent(arena_life_bar);
         arena->setPosition(Vec3(600, 0, -600));
         stage->addObject(arena);
         stage->setCamera(camera);
@@ -193,8 +242,16 @@ void run()
         stage->setInputDelegate(&delegates::inputDelegate);
         stage->setOffworldDelegate(&delegates::offworldDelegate);
         stage->setGround(ground);
+//        GraphStage *graph = new GraphStage();
+//        RectWidget *widget = new RectWidget(Rect(-100, -100, 200, 200), Vec4(1, 1, 1, 1));
+//        widget->setPos(Vec2(300, 300));
+//        graph->addWidget(widget);
+//        TextWidget *text = new TextWidget("Some random text", ":/fonts/arial.ttf", 100, Vec4(1, 1, 1, 1));
+//        text->setPos(Vec2(0, 0));
+//        graph->addWidget(text);
         window->setCursorVisibility(false);
-        window->setStage(stage);
+        window->pushStage(stage);
+//        window->pushStage(graph);
         window->exec();
         delete window;
         Game::shutdown();

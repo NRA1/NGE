@@ -26,7 +26,7 @@ public:
     WorldStage();
 
     void viewportSizeChanged(Size size) override;
-    void handleEvent(Event *event) override;
+    bool handleEvent(Event *event) override;
     void render(unsigned int time) override;
 
     void addObject(Object *object);
@@ -34,7 +34,7 @@ public:
     void setCamera(Camera *camera);
     void setGround(Ground *ground);
     void setCollisionDelegate(bool (*collision_delegate)(WorldStage *, Object *, Object *));
-    void setInputDelegate(void (*input_delegate)(WorldStage *, Event *));
+    void setInputDelegate(bool (*input_delegate)(WorldStage *, Event *));
     void setOffworldDelegate(bool (*offworld_delegate)(WorldStage *, Object *));
 
     Object *findObjectByName(const std::string &name) const;
@@ -58,13 +58,15 @@ private:
     Ground *ground_;
     ShaderProgram *shader_program_;
 
+    bool visible_;
+
 #if DISPLAY_COLLIDERS
     DebugBox *collider_display_;
     std::vector<PositionedBox> collider_boxes_;
 #endif
 
     bool (*collision_delegate_)(WorldStage *stage, Object *object, Object *collider);
-    void (*input_delegate_)(WorldStage *stage, Event *event);
+    bool (*input_delegate_)(WorldStage *stage, Event *event);
     bool (*offwold_delegate_)(WorldStage *stage, Object *event);
 };
 

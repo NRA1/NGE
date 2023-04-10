@@ -20,6 +20,8 @@ public:
     void setInt(const std::string &name, int value) const;
     void setFloat(const std::string &name, float value) const;
     void setVec2(const std::string &name, Vec2 value) const;
+    void setVec3(const std::string &name, Vec3 value) const;
+    void setVec4(const std::string &name, Vec4 value) const;
     void setMat4(const std::string &name, Mat4 &value) const;
 
     ~ShaderProgram();

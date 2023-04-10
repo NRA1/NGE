@@ -1,6 +1,8 @@
 #include "../interface/game_window.hpp"
 #include "../data_objects/events/key_release_event.hpp"
 #include "../data_objects/events/mouse_move_event.hpp"
+#include "../data_objects/events/mouse_press_event.h"
+#include "../data_objects/events/mouse_release_event.h"
 
 template <class T>
 X11Window<T>::X11Window(const std::string& title, Size size)
@@ -145,11 +147,51 @@ void X11Window<T>::poolEvents()
         }
         else if(event.type == MotionNotify)
         {
-            dispatch_event = new MouseMoveEvent(event.xmotion.x - this->size().width() / 2, event.xmotion.y - this->size().height() / 2, pressed_modifiers_);
-            XSync(display_, False);
-            XWarpPointer(display_, window_, window_, 0, 0, this->size().width(), this->size().height(), this->size().width() / 2, this->size().height() / 2);
-            XSync(display_, False);
-            skip.push_back(XEventsQueued(display_, QueuedAlready));
+            if(!this->cursorVisible())
+            {
+                dispatch_event = new MouseMoveEvent(event.xmotion.x - this->size().width() / 2, event.xmotion.y - this->size().height() / 2, pressed_modifiers_);
+                XSync(display_, False);
+                XWarpPointer(display_, window_, window_, 0, 0, this->size().width(), this->size().height(),
+                             this->size().width() / 2, this->size().height() / 2);
+                XSync(display_, False);
+                skip.push_back(XEventsQueued(display_, QueuedAlready));
+            }
+            else
+            {
+                float x = event.xmotion.x - (this->size_.width() / 2);
+                float y = (this->size_.height() / 2) - event.xmotion.y;
+                dispatch_event = new MouseMoveEvent(x, y, pressed_modifiers_);
+            }
+        }
+        else if(event.type == ButtonPress)
+        {
+            float x, y;
+            if(!this->cursorVisible())
+            {
+                x = event.xbutton.x - this->size().width() / 2;
+                y = event.xbutton.y - this->size().height() / 2;
+            }
+            else
+            {
+                x = event.xbutton.x - (this->size_.width() / 2);
+                y = (this->size_.height() / 2) - event.xbutton.y;
+            }
+            dispatch_event = new MousePressEvent(x, y, (MouseButton)event.xbutton.button, pressed_modifiers_);
+        }
+        else if(event.type == ButtonRelease)
+        {
+            float x, y;
+            if(!this->cursorVisible())
+            {
+                x = event.xbutton.x - this->size().width() / 2;
+                y = event.xbutton.y - this->size().height() / 2;
+            }
+            else
+            {
+                x = event.xbutton.x - (this->size_.width() / 2);
+                y = (this->size_.height() / 2) - event.xbutton.y;
+            }
+            dispatch_event = new MouseReleaseEvent(x, y, (MouseButton)event.xbutton.button, pressed_modifiers_);
         }
 
         if(dispatch_event != nullptr)

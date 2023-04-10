@@ -1,16 +1,16 @@
 #include "mouse_move_event.hpp"
 
-MouseMoveEvent::MouseMoveEvent(int x, int y, int modifiers) : x_(x), y_(y), modifiers_(modifiers)
+MouseMoveEvent::MouseMoveEvent(float x, float y, int modifiers) : x_(x), y_(y), modifiers_(modifiers)
 {
 
 }
 
-int MouseMoveEvent::x() const
+float MouseMoveEvent::x() const
 {
     return x_;
 }
 
-int MouseMoveEvent::y() const
+float MouseMoveEvent::y() const
 {
     return y_;
 }

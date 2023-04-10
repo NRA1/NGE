@@ -156,4 +156,11 @@ void Object::tick()
         component->tick();
 }
 
+AbstractComponent *Object::findComponent(const std::string &name)
+{
+    auto it = std::find_if(components_.begin(), components_.end(), [name](AbstractComponent *x) { return x->name() == name; });
+    if(it != components_.end()) return *it;
+    return nullptr;
+}
+
 
