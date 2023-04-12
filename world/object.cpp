@@ -162,5 +162,3 @@ AbstractComponent *Object::findComponent(const std::string &name)
     if(it != components_.end()) return *it;
     return nullptr;
 }
-
-

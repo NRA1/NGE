@@ -87,3 +87,51 @@ void TextWidget::calculateBoundingRect()
 {
 
 }
+
+const std::string &TextWidget::text() const
+{
+    return text_;
+}
+
+void TextWidget::setText(const std::string &text)
+{
+    unload();
+    text_ = text;
+    load();
+}
+
+const std::string &TextWidget::font() const
+{
+    return font_;
+}
+
+void TextWidget::setFont(const std::string &font)
+{
+    unload();
+    font_ = font;
+    load();
+}
+
+unsigned int TextWidget::fontSize() const
+{
+    return font_size_;
+}
+
+void TextWidget::setFontSize(unsigned int fontSize)
+{
+    unload();
+    font_size_ = fontSize;
+    load();
+}
+
+const Vec4 &TextWidget::color() const
+{
+    return color_;
+}
+
+void TextWidget::setColor(const Vec4 &color)
+{
+    unload();
+    color_ = color;
+    load();
+}

@@ -29,10 +29,10 @@ WinmainConfig Game::winmainConfig()
 #ifdef __unix__
 void Game::initialize()
 {
-    time_t now = time(0);
-    tm *ltm = localtime(&now);
+//    time_t now = time(0);
+//    tm *ltm = localtime(&now);
 
-    Log::setDefaultTarget(Log::Target(":/logs/log-" + std::to_string(ltm->tm_year + 1900) + "-" + std::to_string(ltm->tm_mon + 1) + "-" + std::to_string(ltm->tm_mday)));
+//    Log::setDefaultTarget(Log::Target(":/logs/log-" + std::to_string(ltm->tm_year + 1900) + "-" + std::to_string(ltm->tm_mon + 1) + "-" + std::to_string(ltm->tm_mday)));
 
     if(initialized_)
     {
@@ -90,6 +90,7 @@ void Game::openglDebugMessageCallback(GLenum, GLenum type, GLuint, GLenum severi
         case GL_INVALID_FRAMEBUFFER_OPERATION: str_type = "GL_INVALID_FRAMEBUFFER_OPERATION"; break;
         default:
             str_type = "unknown type";
+            return;
     }
 
     std::string str_severity;

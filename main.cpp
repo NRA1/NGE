@@ -18,6 +18,12 @@
 
 void run();
 
+int enemies = 3;
+int arenas = 1;
+
+TextWidget *enemies_widget;
+TextWidget *arenas_widget;
+
 namespace delegates
 {
     unsigned int bullet_counter = 0;
@@ -35,15 +41,28 @@ namespace delegates
                     BarComponent *life = (BarComponent *) alife;
                     PropertyComponent<unsigned int> *damage = (PropertyComponent<unsigned int> *) adamage;
                     if (life->value() <= damage->value())
+                    {
+                        if(collider->name().starts_with("arena"))
+                        {
+                            arenas--;
+                            arenas_widget->setText("Arenas: " + std::to_string(arenas));
+                        }
+                        else if(collider->name().starts_with("enemy"))
+                        {
+                            enemies--;
+                            enemies_widget->setText("Enemies: " + std::to_string(enemies));
+                        }
                         stage->removeObject(collider);
+                    }
                     else
                         life->adjustValue(-((int)damage->value()));
+
                     stage->removeObject(object);
                     return true;
                 }
             }
         }
-        return false;
+        return true;
     }
 
     bool inputDelegate(WorldStage *stage, Event *event)
@@ -161,7 +180,7 @@ namespace delegates
             if(player == nullptr) return false;
             Mat4 mat = Mat4(1);
             mat = glm::rotate(mat, glm::radians(360 - player->rotation().roll()), Vec3(0, 1, 0));
-            Vec4 rel_start_pos = Vec4(0, 0, 50, 0) * mat;
+            Vec4 rel_start_pos = Vec4(0, 100, 50, 0) * mat;
             Object *bullet = new Object("bullet" + std::to_string(bullet_counter++));
             bullet->setPosition(Vec3(player->position().x + rel_start_pos.x, player->position().y + rel_start_pos.y,
                                      player->position().z + rel_start_pos.z));
@@ -223,14 +242,19 @@ void run()
         InputComponent *input = new InputComponent("input");
         object->addComponent(input);
         stage->addObject(object);
-        Object *colider = new Object("tmpColliderObj");
-        MeshComponent *colider_comp = new MeshComponent("mesh", ":/models/bot/bot4.obj");
-        NPCComponent *collider_npc = new NPCComponent("npc");
-        colider->setPosition(Vec3(200, 0, 200));
-        colider->addComponent(colider_comp);
-        colider->addComponent(collider_npc);
-//        stage->addObject(colider);
-        Object *arena = new Object("arena");
+        for(int i = 0; i < enemies; i++)
+        {
+            Object *enemy = new Object("enemy" + std::to_string(i));
+            MeshComponent *enemy_comp = new MeshComponent("mesh", ":/models/bot/bot4.obj");
+            NPCComponent *enemy_npc = new NPCComponent("npc");
+            BarComponent *enemy_life = new BarComponent("life", 50, 50);
+            enemy->setPosition(Vec3(100 * (i + 2), 0, 100 * (1 + i)));
+            enemy->addComponent(enemy_comp);
+            enemy->addComponent(enemy_npc);
+            enemy->addComponent(enemy_life);
+            stage->addObject(enemy);
+        }
+        Object *arena = new Object("arena0");
         MeshComponent *arena_comp = new MeshComponent("mesh", ":/models/arena/arena.fbx");
         arena->addComponent(arena_comp);
         BarComponent *arena_life_bar = new BarComponent("life", 100, 100);
@@ -242,7 +266,13 @@ void run()
         stage->setInputDelegate(&delegates::inputDelegate);
         stage->setOffworldDelegate(&delegates::offworldDelegate);
         stage->setGround(ground);
-//        GraphStage *graph = new GraphStage();
+        GraphStage *graph = new GraphStage();
+        enemies_widget = new TextWidget("Enemies: " + std::to_string(enemies), ":/fonts/arial.ttf", 20, Vec4(1, 1, 1, 1));
+        arenas_widget = new TextWidget("Arenas: " + std::to_string(arenas), ":/fonts/arial.ttf", 20, Vec4(1, 1, 1, 1));
+        enemies_widget->setPos(Vec2(700, 500));
+        arenas_widget->setPos(Vec2(700, 470));
+        graph->addWidget(enemies_widget);
+        graph->addWidget(arenas_widget);
 //        RectWidget *widget = new RectWidget(Rect(-100, -100, 200, 200), Vec4(1, 1, 1, 1));
 //        widget->setPos(Vec2(300, 300));
 //        graph->addWidget(widget);
@@ -251,7 +281,7 @@ void run()
 //        graph->addWidget(text);
         window->setCursorVisibility(false);
         window->pushStage(stage);
-//        window->pushStage(graph);
+        window->pushStage(graph);
         window->exec();
         delete window;
         Game::shutdown();

@@ -15,6 +15,16 @@ public:
 
     Rect boundingRect() const override;
     unsigned int requiredShaderPrograms() const override;
+
+    const std::string &text() const;
+    void setText(const std::string &text);
+    const std::string &font() const;
+    void setFont(const std::string &font);
+    unsigned int fontSize() const;
+    void setFontSize(unsigned int fontSize);
+    const Vec4 &color() const;
+    void setColor(const Vec4 &color);
+
 private:
     void calculateBoundingRect();
 

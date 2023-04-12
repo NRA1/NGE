@@ -156,6 +156,8 @@ void WorldStage::applyPhysics(unsigned int time)
         collider_boxes_.push_back(aabb);
 #endif
 
+        bool skip_move = false;
+
         for(const auto &collider : objects_)
         {
             if(collider == obj) continue;
@@ -170,11 +172,11 @@ void WorldStage::applyPhysics(unsigned int time)
                && interface::checkCollision(aabb.y(), aabb.y() + aabb.height(), collider_aabb.y(), collider_aabb.y() + collider_aabb.height())
                && interface::checkCollision(aabb.z(), aabb.z() + aabb.depth(), collider_aabb.z(), collider_aabb.z() + collider_aabb.depth()))
             {
-                if(collision_delegate_ != nullptr && collision_delegate_(this, obj, collider)) return;
+                if(collision_delegate_ != nullptr && collision_delegate_(this, obj, collider)) skip_move = true;
             }
         }
-
-        obj->setPosition(obj->position() + distance);
+        if(!skip_move)
+            obj->setPosition(obj->position() + distance);
     }
 
     if(camera()->motionVector().has_value())
