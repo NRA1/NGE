@@ -21,6 +21,8 @@ private:
     float y_;
     float width_;
     float height_;
+
+    friend class SaveManager;
 };
 
 

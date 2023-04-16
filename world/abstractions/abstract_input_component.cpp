@@ -10,3 +10,7 @@ unsigned int AbstractInputComponent::type()
     return AbstractInputComponentType;
 }
 
+AbstractInputComponent::AbstractInputComponent(std::ifstream &ifs) : AbstractComponent(ifs)
+{
+}
+

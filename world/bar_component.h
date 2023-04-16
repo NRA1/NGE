@@ -8,6 +8,7 @@ class BarComponent : public AbstractBarComponent
 {
 public:
     BarComponent(std::string name, unsigned int capacity, unsigned int value);
+    BarComponent(std::ifstream &ifs);
     unsigned int capacity() const override;
     unsigned int value() const override;
     void adjustValue(int adjustment) override;
@@ -15,6 +16,8 @@ public:
 
     unsigned int type() override;
     void objectChanged() override;
+
+    void dump(std::ofstream &ofs) override;
 
 private:
     unsigned int capacity_;

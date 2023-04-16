@@ -97,3 +97,31 @@ bool GameWindow::isCursorVisible()
     return native_->cursorVisible();
 }
 
+void GameWindow::close()
+{
+    native_->setShouldClose(true);
+}
+
+void GameWindow::deleteStage(AbstractStage *stage)
+{
+    if(shown_)
+    {
+        stage->onDisappearing();
+    }
+    erase_if(stages_, [stage](AbstractStage *x) { return x == stage; });
+    delete stage;
+}
+
+void GameWindow::insertStage(AbstractStage *stage, unsigned int index)
+{
+    auto it = stages_.begin();
+    for(unsigned int i = 0; i < index; i++)
+        it++;
+    stages_.insert(it, stage);
+    if(shown_)
+    {
+        stage->viewportSizeChanged(native_->size());
+        stage->onAppearing();
+    }
+}
+

@@ -8,6 +8,7 @@ class AbstractNPCComponent : public AbstractComponent
 {
 public:
     AbstractNPCComponent(std::string name);
+    AbstractNPCComponent(std::ifstream &ifs);
     unsigned int type() override;
     virtual void tick() = 0;
 };

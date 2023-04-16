@@ -9,9 +9,11 @@ class NPCComponent : public AbstractNPCComponent
 {
 public:
     NPCComponent(std::string name);
+    NPCComponent(std::ifstream &ifs);
 
     void tick() override;
     void objectChanged() override;
+    unsigned int type() override;
 
 private:
     MotionManipulationObject *mmo_;

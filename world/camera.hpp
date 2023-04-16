@@ -35,6 +35,8 @@ private:
 
     Object *target_object_;
     Size *viewport_;
+
+    friend class SaveManager;
 };
 
 

@@ -20,10 +20,13 @@ void WorldStage::viewportSizeChanged(Size size)
 
 void WorldStage::render(unsigned int time)
 {
-    for(auto obj : objects_)
-        obj->tick();
+    if(!freeze_)
+    {
+        for (auto obj: objects_)
+            obj->tick();
 
-    applyPhysics(time);
+        applyPhysics(time);
+    }
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     shader_program_->use();
@@ -241,4 +244,9 @@ Object *WorldStage::findObjectByName(const std::string &name) const
 void WorldStage::setOffworldDelegate(bool (*offworld_delegate)(WorldStage *, Object *))
 {
     offwold_delegate_ = offworld_delegate;
+}
+
+void WorldStage::setFreeze(bool freeze)
+{
+    freeze_ = freeze;
 }

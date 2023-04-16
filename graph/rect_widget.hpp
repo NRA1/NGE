@@ -14,15 +14,15 @@ public:
     void render(std::map<unsigned int, ShaderProgram *> &shader_program) const override;
     void unload() override;
 
-    bool mouseMoveEvent(MouseMoveEvent *event) override;
-    void mouseEnterEvent() override;
-    void mouseLeaveEvent() override;
-
     Rect boundingRect() const override;
     unsigned int requiredShaderPrograms() const override;
 
+    const Rect &rect() const;
+    void setRect(const Rect &rect);
+    const Vec4 &color() const;
+    void setColor(const Vec4 &color);
+
 private:
-    bool highlighted_;
 
     Rect rect_;
     Vec4 color_;

@@ -18,6 +18,7 @@ class MeshComponent : public AbstractMeshComponent
 {
 public:
     explicit MeshComponent(std::string name, std::string model_path);
+    MeshComponent(std::ifstream &ifs);
     [[nodiscard]] const PositionedBox &boundingBox() const override;
     unsigned int type() override;
     void load() override;
@@ -25,6 +26,8 @@ public:
     void render() override;
     void objectChanged() override;
     void setModelPosition() override;
+
+    void dump(std::ofstream &ofs) override;
 
     ~MeshComponent() override;
 

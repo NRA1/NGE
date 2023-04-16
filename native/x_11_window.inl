@@ -121,11 +121,6 @@ void X11Window<T>::poolEvents()
         {
             KeySym sym = XLookupKeysym(&event.xkey, 0);
             Key key = native::nativeToKey(sym);
-            if(key == KeyEscape)
-            {
-                this->should_close_ = true;
-                return;
-            }
             int modifiers = pressed_modifiers_;
             bool repeated = true;
             if(std::find(pressed_keys_.begin(), pressed_keys_.end(), event.xkey.keycode) == pressed_keys_.end())
@@ -246,7 +241,11 @@ void X11Window<T>::setCursorVisibility(bool visible)
     else
     {
         XUndefineCursor(display_, window_);
-        if(cursor_ != None) XFreeCursor(display_, cursor_);
+        if(cursor_ != None)
+        {
+            XFreeCursor(display_, cursor_);
+            cursor_ = None;
+        }
     }
 }
 

@@ -12,3 +12,8 @@ unsigned int AbstractNPCComponent::type()
 {
     return AbstractNPCComponentType;
 }
+
+AbstractNPCComponent::AbstractNPCComponent(std::ifstream &ifs) : AbstractComponent(ifs)
+{
+
+}

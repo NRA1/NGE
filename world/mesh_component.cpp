@@ -1,4 +1,5 @@
 #include "mesh_component.hpp"
+#include "../infrastructure/save_manager.hpp"
 
 #include <utility>
 
@@ -70,4 +71,22 @@ void MeshComponent::setModelPosition()
 unsigned int MeshComponent::type()
 {
     return MeshComponentType;
+}
+
+void MeshComponent::dump(std::ofstream &ofs)
+{
+    AbstractMeshComponent::dump(ofs);
+    if(!ofs.is_open()) throw "File not open";
+    char path[50];
+    for(unsigned int i = 0; i < model_path_.size(); i++)
+        path[i] = model_path_[i];
+    path[model_path_.size()] = '\0';
+    ofs.write(path, sizeof(path));
+}
+
+MeshComponent::MeshComponent(std::ifstream &ifs) : AbstractMeshComponent(ifs), loaded_(false)
+{
+    char path[50];
+    ifs.read(path, sizeof(path));
+    model_path_ = std::string(path);
 }

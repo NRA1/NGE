@@ -13,3 +13,8 @@ unsigned int AbstractBarComponent::type()
 {
     return (int)AbstractBarComponentType;
 }
+
+AbstractBarComponent::AbstractBarComponent(std::ifstream &ifs) : AbstractComponent(ifs)
+{
+
+}

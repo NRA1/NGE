@@ -22,6 +22,8 @@ private:
     float roll_;
     float pitch_;
     float yaw_;
+
+    friend class SaveManager;
 };
 
 

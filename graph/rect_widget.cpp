@@ -1,7 +1,7 @@
 #include "rect_widget.hpp"
 #include "../enums/shader_program_type.hpp"
 
-RectWidget::RectWidget(Rect rect, Vec4 color) : highlighted_(false), rect_(rect), color_(color), VBO_(0), VAO_(0), EBO_(0)
+RectWidget::RectWidget(Rect rect, Vec4 color) : rect_(rect), color_(color), VBO_(0), VAO_(0), EBO_(0)
 {
 
 }
@@ -38,8 +38,7 @@ void RectWidget::load()
 void RectWidget::render(std::map<unsigned int, ShaderProgram *> &shader_programs) const
 {
     shader_programs[ShaderProgramType::ShapeType]->use();
-    Vec4 color = highlighted_ ? color_ : Vec4(0, 0, 0, 1);
-    shader_programs[ShaderProgramType::ShapeType]->setVec4("color", color);
+    shader_programs[ShaderProgramType::ShapeType]->setVec4("color", color_);
     glBindVertexArray(VAO_);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
@@ -60,22 +59,27 @@ Rect RectWidget::boundingRect() const
     return rect_;
 }
 
-bool RectWidget::mouseMoveEvent(MouseMoveEvent *)
-{
-    return true;
-}
-
-void RectWidget::mouseEnterEvent()
-{
-    highlighted_ = true;
-}
-
-void RectWidget::mouseLeaveEvent()
-{
-    highlighted_ = false;
-}
-
 unsigned int RectWidget::requiredShaderPrograms() const
 {
     return ShaderProgramType::ShapeType;
+}
+
+const Rect &RectWidget::rect() const
+{
+    return rect_;
+}
+
+void RectWidget::setRect(const Rect &rect)
+{
+    rect_ = rect;
+}
+
+const Vec4 &RectWidget::color() const
+{
+    return color_;
+}
+
+void RectWidget::setColor(const Vec4 &color)
+{
+    color_ = color;
 }

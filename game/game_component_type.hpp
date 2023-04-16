@@ -1,0 +1,9 @@
+#ifndef NGE_GAME_COMPONENT_TYPE_HPP
+#define NGE_GAME_COMPONENT_TYPE_HPP
+
+enum GameComponentType
+{
+    NPCComponentType = 0b0000010000000001
+};
+
+#endif //NGE_GAME_COMPONENT_TYPE_HPP

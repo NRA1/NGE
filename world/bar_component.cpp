@@ -38,3 +38,17 @@ void BarComponent::objectChanged()
 {
 
 }
+
+void BarComponent::dump(std::ofstream &ofs)
+{
+    if(!ofs.is_open()) throw "File not open";
+    AbstractComponent::dump(ofs);
+    ofs.write((char*)&capacity_, sizeof(capacity_));
+    ofs.write((char*)&value_, sizeof(value_));
+}
+
+BarComponent::BarComponent(std::ifstream &ifs) : AbstractBarComponent(ifs)
+{
+    ifs.read((char*)&capacity_, sizeof(capacity_));
+    ifs.read((char*)&value_, sizeof(value_));
+}

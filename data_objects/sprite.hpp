@@ -20,6 +20,8 @@ private:
     Texture *texture_;
     std::string path_;
     Rect bounding_rect_;
+
+    friend class SaveManager;
 };
 
 

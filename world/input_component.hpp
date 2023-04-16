@@ -10,12 +10,14 @@ class InputComponent : public AbstractInputComponent
 {
 public:
     InputComponent(const std::string &name);
+    InputComponent(std::ifstream &ifs);
 
     bool keyPressEvent(KeyPressEvent *event) override;
     bool keyReleaseEvent(KeyReleaseEvent *event) override;
     bool mouseMoveEvent(MouseMoveEvent *event) override;
 
     void objectChanged() override;
+    unsigned int type() override;
 
     ~InputComponent() override;
 

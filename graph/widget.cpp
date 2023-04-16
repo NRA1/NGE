@@ -1,6 +1,7 @@
 #include "widget.hpp"
+#include "../enums/layout_origin.hpp"
 
-Widget::Widget() : pos_(Vec2(0, 0))
+Widget::Widget() : pos_(Vec2(0, 0)), z_pos_(0), visible_(true), layout_flags_(0), layout_origin_(LayoutOrigin::Center)
 {
 
 }
@@ -59,4 +60,55 @@ unsigned int Widget::requiredShaderPrograms() const
 {
     return 0;
 }
+
+bool Widget::mousePressEvent(MousePressEvent *)
+{
+    return false;
+}
+
+bool Widget::mouseReleaseEvent(MouseReleaseEvent *)
+{
+    return false;
+}
+
+float Widget::zPos() const
+{
+    return z_pos_;
+}
+
+void Widget::setZPos(float z_pos)
+{
+    z_pos_ = z_pos;
+}
+
+unsigned int Widget::layoutFlags() const
+{
+    return layout_flags_;
+}
+
+void Widget::setLayoutFlags(unsigned int layout_flags)
+{
+    layout_flags_ = layout_flags;
+}
+
+unsigned int Widget::layoutOrigin() const
+{
+    return layout_origin_;
+}
+
+void Widget::setLayoutOrigin(unsigned int layout_origin)
+{
+    layout_origin_ = layout_origin;
+}
+
+bool Widget::visible() const
+{
+    return visible_;
+}
+
+void Widget::setVisible(bool visible)
+{
+    visible_ = visible;
+}
+
 

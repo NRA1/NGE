@@ -12,6 +12,7 @@ class AbstractComponent
 {
 public:
     explicit AbstractComponent(std::string name);
+    explicit AbstractComponent(std::ifstream &ifs);
     void setName(std::string name);
     [[nodiscard]] const std::string &name() const;
     Object *object() const;
@@ -19,6 +20,7 @@ public:
 //    virtual int features() = 0;
     virtual void objectChanged() = 0;
     virtual unsigned int type() = 0;
+    virtual void dump(std::ofstream &ofs);
 
 //    virtual void load() = 0;
 //    virtual void unload() = 0;

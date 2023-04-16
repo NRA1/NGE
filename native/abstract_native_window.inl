@@ -19,6 +19,12 @@ bool AbstractNativeWindow<T>::shouldClose()
 }
 
 template<class T>
+void AbstractNativeWindow<T>::setShouldClose(bool should_close)
+{
+    should_close_ = should_close;
+}
+
+template<class T>
 void AbstractNativeWindow<T>::setSubscriber(T *subscriber)
 {
     subscriber_ = subscriber;

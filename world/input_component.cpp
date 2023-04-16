@@ -62,3 +62,13 @@ InputComponent::~InputComponent()
 {
     object()->motionVector().destroyManipulationObject(manipulation_obj_);
 }
+
+InputComponent::InputComponent(std::ifstream &ifs) : AbstractInputComponent(ifs), manipulation_obj_(nullptr),
+                                                     last_mouse_move_pos(std::nullopt)
+{
+}
+
+unsigned int InputComponent::type()
+{
+    return ComponentType::InputComponentType;
+}

@@ -8,6 +8,7 @@ class AbstractBarComponent : public AbstractComponent
 {
 public:
     AbstractBarComponent(std::string name);
+    AbstractBarComponent(std::ifstream &ifs);
 
     virtual unsigned int capacity() const = 0;
     virtual unsigned int value() const = 0;

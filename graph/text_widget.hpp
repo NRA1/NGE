@@ -7,7 +7,7 @@
 class TextWidget : public Widget
 {
 public:
-    TextWidget(std::string text, std::string font, unsigned int font_size, Vec4 color);
+    TextWidget(std::string text, std::string font = ":/fonts/arial.ttf", unsigned int font_size = 20, Vec4 color = Vec4(1, 1, 1, 1));
 
     virtual void load() override;
     virtual void render(std::map<unsigned int, ShaderProgram *> &shader_programs) const override;

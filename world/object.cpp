@@ -3,8 +3,8 @@
 #include <utility>
 #include "mesh_component.hpp"
 
-Object::Object(std::string name) : features_(0), user_types_(0), name_(std::move(name)), position_(Vec3(0, 0, 0)),
-                                   rotation_(0, 0, 0)
+Object::Object(std::string name) : features_(0), user_types_(0), name_(std::move(name)),
+                                   position_(Vec3(0, 0, 0)), rotation_(0, 0, 0), motion_vector_()
 {
 
 }
@@ -123,16 +123,6 @@ Object::~Object()
     {
         delete component;
     }
-}
-
-int Object::collisionDamage() const
-{
-    return collision_damage_;
-}
-
-void Object::setCollisionDamage(int collision_damage)
-{
-    collision_damage_ = collision_damage;
 }
 
 int Object::userTypes() const

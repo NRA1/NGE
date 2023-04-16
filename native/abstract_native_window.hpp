@@ -14,6 +14,7 @@ public:
     virtual void show() = 0;
     virtual void hide() = 0;
     virtual bool shouldClose();
+    virtual void setShouldClose(bool should_close);
     virtual void poolEvents() = 0;
     virtual void swapBuffers() = 0;
     virtual void setSubscriber(T *subscriber);

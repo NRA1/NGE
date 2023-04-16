@@ -34,8 +34,6 @@ public:
     void setStage(WorldStage *stage);
     MotionVector &motionVector();
     PositionedBox boundingBox() const;
-    int collisionDamage() const;
-    void setCollisionDamage(int collision_damage);
     const std::string &name() const;
     int userTypes() const;
     void setUserTypes(int types);
@@ -63,7 +61,6 @@ private:
     std::vector<AbstractNPCComponent*> npc_components_;
 
     unsigned int features_;
-    int collision_damage_;
     int user_types_;
     std::string name_;
 
@@ -71,6 +68,8 @@ private:
     Rotation rotation_;
     MotionVector motion_vector_;
     WorldStage *stage_;
+
+    friend class SaveManager;
 };
 
 #include "object.inl"

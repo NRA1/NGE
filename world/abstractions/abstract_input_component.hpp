@@ -12,6 +12,7 @@ class AbstractInputComponent : public AbstractComponent
 {
 public:
     AbstractInputComponent(const std::string &name);
+    AbstractInputComponent(std::ifstream &ifs);
 
     unsigned int type() override;
     virtual bool keyPressEvent(KeyPressEvent *event) = 0;

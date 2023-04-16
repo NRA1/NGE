@@ -1,4 +1,5 @@
 #include "npc_component.hpp"
+#include "game_component_type.hpp"
 
 #include <utility>
 
@@ -27,6 +28,16 @@ void NPCComponent::objectChanged()
 }
 
 NPCComponent::NPCComponent(std::string name) : AbstractNPCComponent(std::move(name)), mmo_(nullptr)
+{
+
+}
+
+unsigned int NPCComponent::type()
+{
+    return GameComponentType::NPCComponentType;
+}
+
+NPCComponent::NPCComponent(std::ifstream &ifs) : AbstractNPCComponent(ifs), mmo_(nullptr)
 {
 
 }

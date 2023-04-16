@@ -26,10 +26,11 @@ private:
               const std::string &height);
 
     Rect bounds_;
-    std::vector<Texture*> textures_;
     std::optional<Sprite> sprite_;
 
     ShaderProgram **shader_program_;
+
+    friend class SaveManager;
 };
 
 

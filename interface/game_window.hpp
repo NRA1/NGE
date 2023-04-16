@@ -17,8 +17,11 @@ public:
     GameWindow(std::string title, int width, int height, int state);
     void exec();
     void pushStage(AbstractStage *stage);
+    void insertStage(AbstractStage *stage, unsigned int index);
+    void deleteStage(AbstractStage *stage);
     void setCursorVisibility(bool visible);
     bool isCursorVisible();
+    void close();
 
     ~GameWindow();
 

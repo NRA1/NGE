@@ -4,3 +4,8 @@ unsigned int AbstractMeshComponent::type()
 {
     return ComponentType::AbstractMeshComponentType;
 }
+
+AbstractMeshComponent::AbstractMeshComponent(std::ifstream &ifs) : AbstractComponent(ifs)
+{
+
+}

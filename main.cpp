@@ -15,18 +15,32 @@
 #include "graph/text_widget.hpp"
 #include "world/bar_component.h"
 #include "world/property_component.h"
+#include "graph/button_widget.hpp"
+#include "enums/layout_origin.hpp"
+#include "enums/layout_flags.hpp"
+#include "game/game_component_type.hpp"
 
 void run();
 
 int enemies = 3;
 int arenas = 1;
 
+GameWindow *window;
+WorldStage *world_stage;
+
 TextWidget *enemies_widget;
 TextWidget *arenas_widget;
+
+RectWidget *background;
+ButtonWidget *save_btn;
+ButtonWidget *load_btn;
+ButtonWidget *exit_btn;
+
 
 namespace delegates
 {
     unsigned int bullet_counter = 0;
+    bool menu_visible = false;
 
     bool collisionDelegate(WorldStage *stage, Object *object, Object *collider)
     {
@@ -67,131 +81,71 @@ namespace delegates
 
     bool inputDelegate(WorldStage *stage, Event *event)
     {
-        static bool camera_tracks = true;
-        static MotionManipulationObject *mmo = nullptr;
         if(event->type() == KeyPressEventType)
         {
             KeyPressEvent *ev = (KeyPressEvent*)event;
-            if(camera_tracks)
+
+            if(ev->key() == Key::KeyEscape)
             {
-                if (ev->key() == Key::KeySpace)
-                {
-                    stage->camera()->setRotation(Rotation(30, -90, 90));
-                    stage->camera()->setPosition(Vec3(300, 500, 300));
-                    stage->camera()->setTargetObject(nullptr);
-                    mmo = stage->camera()->motionVector()->generateManipulationObject(true);
-                    camera_tracks = false;
-                }
-                else
-                {
-                    Object *player = stage->findObjectByName("player");
-                    if(player == nullptr) return true;
-                    player->keyPressEvent(ev);
-                }
+                menu_visible = !menu_visible;
+                window->setCursorVisibility(menu_visible);
+                stage->setFreeze(menu_visible);
+                background->setVisible(menu_visible);
+                save_btn->setVisible(menu_visible);
+                load_btn->setVisible(menu_visible);
+                exit_btn->setVisible(menu_visible);
+
+                return true;
             }
-            else
+            if(!menu_visible)
             {
-                if(ev->key() == Key::KeySpace)
-                {
-                    stage->camera()->motionVector()->destroyManipulationObject(mmo);
-                    mmo = nullptr;
-                    stage->camera()->setTargetObject(stage->findObjectByName("player"));
-                    camera_tracks = true;
-                }
-                if(!ev->isRepeated())
-                {
-                    if(ev->key() == Key::KeyLeft)
-                    {
-                        std::optional<Rotation> rot = mmo->rotation();
-                        if(!rot.has_value()) rot = Rotation(0, 0, 0);
-                        mmo->setRotation(rot.value() + Rotation(5, 0, 0));
-                    }
-                    else if(ev->key() == Key::KeyRight)
-                    {
-                        std::optional<Rotation> rot = mmo->rotation();
-                        if(!rot.has_value()) rot = Rotation(0, 0, 0);
-                        mmo->setRotation(rot.value() + Rotation(-5, 0, 0));
-                    }
-                    else if(ev->key() == Key::KeyUp)
-                    {
-                        std::optional<Rotation> rot = mmo->rotation();
-                        if(!rot.has_value()) rot = Rotation(0, 0, 0);
-                        mmo->setRotation(rot.value() + Rotation(0, 0, 5));
-                    }
-                    else if(ev->key() == Key::KeyDown)
-                    {
-                        std::optional<Rotation> rot = mmo->rotation();
-                        if(!rot.has_value()) rot = Rotation(0, 0, 0);
-                        mmo->setRotation(rot.value() + Rotation(0, 0, -5));
-                    }
-                }
+                Object *player = stage->findObjectByName("player");
+                if(player == nullptr) return true;
+                player->keyPressEvent(ev);
             }
         }
         else if(event->type() == KeyReleaseEventType)
         {
-            KeyReleaseEvent *ev = (KeyReleaseEvent*)event;
-            if(camera_tracks)
+            if(!menu_visible)
             {
+                KeyReleaseEvent *ev = (KeyReleaseEvent *) event;
                 Object *player = stage->findObjectByName("player");
-                if(player == nullptr) return true;
+                if (player == nullptr) return true;
                 player->keyReleaseEvent(ev);
-            }
-            else
-            {
-                if(ev->key() == Key::KeyLeft)
-                {
-                    std::optional<Rotation> rot = mmo->rotation();
-                    if(!rot.has_value()) rot = Rotation(0, 0, 0);
-                    mmo->setRotation(rot.value() + Rotation(-5, 0, 0));
-                }
-                else if(ev->key() == Key::KeyRight)
-                {
-                    std::optional<Rotation> rot = mmo->rotation();
-                    if(!rot.has_value()) rot = Rotation(0, 0, 0);
-                    mmo->setRotation(rot.value() + Rotation(5, 0, 0));
-                }
-                else if(ev->key() == Key::KeyUp)
-                {
-                    std::optional<Rotation> rot = mmo->rotation();
-                    if(!rot.has_value()) rot = Rotation(0, 0, 0);
-                    mmo->setRotation(rot.value() + Rotation(0, 0, -5));
-                }
-                else if(ev->key() == Key::KeyDown)
-                {
-                    std::optional<Rotation> rot = mmo->rotation();
-                    if(!rot.has_value()) rot = Rotation(0, 0, 0);
-                    mmo->setRotation(rot.value() + Rotation(0, 0, 5));
-                }
             }
         }
         else if(event->type() == MouseMoveEventType)
         {
-            MouseMoveEvent *ev = (MouseMoveEvent*)event;
-            if(camera_tracks)
+            if(!menu_visible)
             {
+                MouseMoveEvent *ev = (MouseMoveEvent *) event;
+
                 Object *player = stage->findObjectByName("player");
-                if(player == nullptr) return true;
+                if (player == nullptr) return true;
                 player->mouseMoveEvent(ev);
             }
         }
         else if(event->type() == MousePressEventType)
         {
-            Object *player = stage->findObjectByName("player");
-            if(player == nullptr) return false;
-            Mat4 mat = Mat4(1);
-            mat = glm::rotate(mat, glm::radians(360 - player->rotation().roll()), Vec3(0, 1, 0));
-            Vec4 rel_start_pos = Vec4(0, 100, 50, 0) * mat;
-            Object *bullet = new Object("bullet" + std::to_string(bullet_counter++));
-            bullet->setPosition(Vec3(player->position().x + rel_start_pos.x, player->position().y + rel_start_pos.y,
-                                     player->position().z + rel_start_pos.z));
-            MeshComponent *mesh_comp = new MeshComponent("mesh", ":/models/bullet/bullet.obj");
-            bullet->addComponent(mesh_comp);
-            PropertyComponent<unsigned int> *damage_component = new PropertyComponent<unsigned int>("damage", 30);
-            bullet->addComponent(damage_component);
-            stage->addObject(bullet);
-            auto mvo = bullet->motionVector().generateManipulationObject(false);
-            Vec4 rotated = Vec4(0, 0, 200, 0) * mat;
-            mvo->setVelocity(rotated);
+            if(!menu_visible)
+            {
+                Object *player = stage->findObjectByName("player");
+                if (player == nullptr) return false;
+                Mat4 mat = Mat4(1);
+                mat = glm::rotate(mat, glm::radians(360 - player->rotation().roll()), Vec3(0, 1, 0));
+                Vec4 rel_start_pos = Vec4(0, 50, 50, 0) * mat;
+                Object *bullet = new Object("bullet" + std::to_string(bullet_counter++));
+                bullet->setPosition(Vec3(player->position().x + rel_start_pos.x, player->position().y + rel_start_pos.y,
+                                         player->position().z + rel_start_pos.z));
+                MeshComponent *mesh_comp = new MeshComponent("mesh", ":/models/bullet/bullet.obj");
+                bullet->addComponent(mesh_comp);
+                PropertyComponent<unsigned int> *damage_component = new PropertyComponent<unsigned int>("damage", 30);
+                bullet->addComponent(damage_component);
+                stage->addObject(bullet);
+                auto mvo = bullet->motionVector().generateManipulationObject(false);
+                Vec4 rotated = Vec4(0, 0, 200, 0) * mat;
+                mvo->setVelocity(rotated);
+            }
         }
         return true;
     }
@@ -199,6 +153,57 @@ namespace delegates
     bool offworldDelegate(WorldStage *stage, Object *obj)
     {
         stage->removeObject(obj);
+        return true;
+    }
+
+    AbstractComponent *componentLoader(unsigned int type, std::ifstream &ifs)
+    {
+        if(type == ComponentType::BarComponentType) return new BarComponent(ifs);
+        else if(type == ComponentType::InputComponentType) return new InputComponent(ifs);
+        else if(type == ComponentType::MeshComponentType) return new MeshComponent(ifs);
+        else if(type == ComponentType::PropertyComponentType) return new PropertyComponent<unsigned int>(ifs);
+        else if(type == GameComponentType::NPCComponentType) return new NPCComponent(ifs);
+        throw "Unknown type";
+    }
+
+    bool save_btn_handler()
+    {
+        try
+        {
+            SaveManager::dump(world_stage, ":/save/save1.dat");
+        }
+        catch(char *err)
+        {
+            log() - Critical < "Failed to save:" < err;
+        }
+        return true;
+    }
+
+    bool load_btn_handler()
+    {
+        try
+        {
+            WorldStage *world_stage_t = SaveManager::load(":/save/save1.dat");
+            world_stage_t->setCollisionDelegate(&delegates::collisionDelegate);
+            world_stage_t->setInputDelegate(&delegates::inputDelegate);
+            world_stage_t->setOffworldDelegate(&delegates::offworldDelegate);
+            Object *player = world_stage_t->findObjectByName("player");
+            world_stage_t->camera()->setTargetObject(player);
+            world_stage_t->setFreeze(true);
+            window->deleteStage(world_stage);
+            world_stage = world_stage_t;
+            window->insertStage(world_stage, 0);
+        }
+        catch (const char *err)
+        {
+            log() - Critical < "Failed to load save:" < err;
+        }
+        return true;
+    }
+
+    bool exit_btn_handler()
+    {
+        window->close();
         return true;
     }
 }
@@ -230,8 +235,9 @@ void run()
 {
     try
     {
-        GameWindow *window = new GameWindow("NGE", 1000, 700, 0);
-        WorldStage *stage = new WorldStage();
+        SaveManager::setComponentLoader(&delegates::componentLoader);
+        window = new GameWindow("NGE", 1000, 700, 0);
+        world_stage = new WorldStage();
         Object *object = new Object("player");
         Camera *camera = new Camera();
         camera->setTargetObject(object);
@@ -241,7 +247,7 @@ void run()
         object->addComponent(component);
         InputComponent *input = new InputComponent("input");
         object->addComponent(input);
-        stage->addObject(object);
+        world_stage->addObject(object);
         for(int i = 0; i < enemies; i++)
         {
             Object *enemy = new Object("enemy" + std::to_string(i));
@@ -252,7 +258,7 @@ void run()
             enemy->addComponent(enemy_comp);
             enemy->addComponent(enemy_npc);
             enemy->addComponent(enemy_life);
-            stage->addObject(enemy);
+            world_stage->addObject(enemy);
         }
         Object *arena = new Object("arena0");
         MeshComponent *arena_comp = new MeshComponent("mesh", ":/models/arena/arena.fbx");
@@ -260,27 +266,49 @@ void run()
         BarComponent *arena_life_bar = new BarComponent("life", 100, 100);
         arena->addComponent(arena_life_bar);
         arena->setPosition(Vec3(600, 0, -600));
-        stage->addObject(arena);
-        stage->setCamera(camera);
-        stage->setCollisionDelegate(&delegates::collisionDelegate);
-        stage->setInputDelegate(&delegates::inputDelegate);
-        stage->setOffworldDelegate(&delegates::offworldDelegate);
-        stage->setGround(ground);
+        world_stage->addObject(arena);
+        world_stage->setCamera(camera);
+        world_stage->setCollisionDelegate(&delegates::collisionDelegate);
+        world_stage->setInputDelegate(&delegates::inputDelegate);
+        world_stage->setOffworldDelegate(&delegates::offworldDelegate);
+        world_stage->setGround(ground);
         GraphStage *graph = new GraphStage();
         enemies_widget = new TextWidget("Enemies: " + std::to_string(enemies), ":/fonts/arial.ttf", 20, Vec4(1, 1, 1, 1));
         arenas_widget = new TextWidget("Arenas: " + std::to_string(arenas), ":/fonts/arial.ttf", 20, Vec4(1, 1, 1, 1));
-        enemies_widget->setPos(Vec2(700, 500));
-        arenas_widget->setPos(Vec2(700, 470));
+        enemies_widget->setPos(Vec2(-130, -40));
+        arenas_widget->setPos(Vec2(-130, -80));
+        enemies_widget->setLayoutOrigin(LayoutOrigin::Top | LayoutOrigin::Right);
+        arenas_widget->setLayoutOrigin(LayoutOrigin::Top | LayoutOrigin::Right);
+        arenas_widget->setZPos(-0.7);
+        enemies_widget->setZPos(-0.7);
         graph->addWidget(enemies_widget);
         graph->addWidget(arenas_widget);
-//        RectWidget *widget = new RectWidget(Rect(-100, -100, 200, 200), Vec4(1, 1, 1, 1));
-//        widget->setPos(Vec2(300, 300));
-//        graph->addWidget(widget);
-//        TextWidget *text = new TextWidget("Some random text", ":/fonts/arial.ttf", 100, Vec4(1, 1, 1, 1));
-//        text->setPos(Vec2(0, 0));
-//        graph->addWidget(text);
+        background = new RectWidget(Rect(0, 0, 100, 100), Vec4(0, 0, 0, 0.5));
+        background->setLayoutOrigin(LayoutOrigin::Bottom | LayoutOrigin::Left);
+        background->setLayoutFlags(LayoutFlags::SizeRelative);
+        background->setZPos(-0.3);
+        background->setVisible(false);
+        graph->addWidget(background);
+
+        save_btn = new ButtonWidget("Save", Rect(-150, 35, 300, 50), &delegates::save_btn_handler,
+                                                  Vec4(1, 1, 1, 1), Vec4(0, 0, 0, 1), 40);
+        save_btn->setZPos(-0.5);
+        save_btn->setVisible(false);
+
+        load_btn = new ButtonWidget("Load", Rect(-150, -25, 300, 50), &delegates::load_btn_handler,
+                                    Vec4(1, 1, 1, 1), Vec4(0, 0, 0, 1), 40);
+        load_btn->setZPos(-0.5);
+        load_btn->setVisible(false);
+
+        exit_btn = new ButtonWidget("Exit", Rect(-150, -85, 300, 50), &delegates::exit_btn_handler,
+                                                  Vec4(1, 1, 1, 1), Vec4(0, 0, 0, 1), 40);
+        exit_btn->setZPos(-0.5);
+        exit_btn->setVisible(false);
+        graph->addWidget(save_btn);
+        graph->addWidget(load_btn);
+        graph->addWidget(exit_btn);
         window->setCursorVisibility(false);
-        window->pushStage(stage);
+        window->pushStage(world_stage);
         window->pushStage(graph);
         window->exec();
         delete window;

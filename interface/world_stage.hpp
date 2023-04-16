@@ -36,6 +36,7 @@ public:
     void setCollisionDelegate(bool (*collision_delegate)(WorldStage *, Object *, Object *));
     void setInputDelegate(bool (*input_delegate)(WorldStage *, Event *));
     void setOffworldDelegate(bool (*offworld_delegate)(WorldStage *, Object *));
+    void setFreeze(bool freeze);
 
     Object *findObjectByName(const std::string &name) const;
 
@@ -59,6 +60,7 @@ private:
     ShaderProgram *shader_program_;
 
     bool visible_;
+    bool freeze_;
 
 #if DISPLAY_COLLIDERS
     DebugBox *collider_display_;
@@ -68,6 +70,8 @@ private:
     bool (*collision_delegate_)(WorldStage *stage, Object *object, Object *collider);
     bool (*input_delegate_)(WorldStage *stage, Event *event);
     bool (*offwold_delegate_)(WorldStage *stage, Object *event);
+
+    friend class SaveManager;
 };
 
 

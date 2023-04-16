@@ -11,6 +11,7 @@ class AbstractMeshComponent : public AbstractComponent
 {
 public:
     AbstractMeshComponent(std::string name) : AbstractComponent(name) { };
+    AbstractMeshComponent(std::ifstream &ifs);
 
     unsigned int type() override;
     virtual void load() = 0;
