@@ -5,6 +5,11 @@ Rotation::Rotation() : roll_(0), pitch_(0), yaw_(0)
 
 }
 
+Rotation::Rotation(const Vec3 &vec) : roll_(vec.x), pitch_(vec.y), yaw_(vec.z)
+{
+
+}
+
 Rotation::Rotation(float roll, float pitch, float yaw) : roll_(roll), pitch_(pitch), yaw_(yaw)
 {
 
@@ -49,4 +54,10 @@ Rotation Rotation::operator*(float x) const
 {
     return { roll() * x, pitch() * x, yaw() * x };
 }
+
+Vec3 Rotation::vec3() const
+{
+    return Vec3(roll(), pitch(), yaw());
+}
+
 

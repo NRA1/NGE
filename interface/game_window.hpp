@@ -18,7 +18,7 @@ public:
     void exec();
     void pushStage(AbstractStage *stage);
     void insertStage(AbstractStage *stage, unsigned int index);
-    void deleteStage(AbstractStage *stage);
+    void eraseStage(AbstractStage *stage);
     void setCursorVisibility(bool visible);
     bool isCursorVisible();
     void close();

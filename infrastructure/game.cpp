@@ -90,7 +90,6 @@ void Game::openglDebugMessageCallback(GLenum, GLenum type, GLuint, GLenum severi
         case GL_INVALID_FRAMEBUFFER_OPERATION: str_type = "GL_INVALID_FRAMEBUFFER_OPERATION"; break;
         default:
             str_type = "unknown type";
-            return;
     }
 
     std::string str_severity;
@@ -104,7 +103,8 @@ void Game::openglDebugMessageCallback(GLenum, GLenum type, GLuint, GLenum severi
     }
 
     log() - level < "OpenGL message of severity" < str_severity < "and type" < str_type + ":" < message;
-    if(severity != GL_DEBUG_SEVERITY_NOTIFICATION) log() - level <<= trace;
+    if(severity != GL_DEBUG_SEVERITY_NOTIFICATION)
+        log() - level <<= trace;
 }
 
 const FT_Library &Game::freeType()

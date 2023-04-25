@@ -36,7 +36,9 @@ public:
     void setCollisionDelegate(bool (*collision_delegate)(WorldStage *, Object *, Object *));
     void setInputDelegate(bool (*input_delegate)(WorldStage *, Event *));
     void setOffworldDelegate(bool (*offworld_delegate)(WorldStage *, Object *));
+    bool freeze() const;
     void setFreeze(bool freeze);
+    void setTrackFilePath(std::optional<std::string> path);
 
     Object *findObjectByName(const std::string &name) const;
 
@@ -45,9 +47,17 @@ public:
     void onAppearing() override;
     void onDisappearing() override;
 
+    void setTrackObject(const std::optional<std::string> &object);
+
     ~WorldStage() override;
 
     Camera *camera();
+
+protected:
+    Camera *camera_;
+    Ground *ground_;
+    ShaderProgram *shader_program_;
+    bool visible_;
 
 private:
     void applyPhysics(unsigned int time);
@@ -55,11 +65,12 @@ private:
     Size viewport_;
 
     std::vector<Object *> objects_;
-    Camera *camera_;
-    Ground *ground_;
-    ShaderProgram *shader_program_;
 
-    bool visible_;
+
+    Object *tracked_object_;
+    std::optional<std::string> track_file_path_;
+    std::optional<std::ofstream> track_file_;
+
     bool freeze_;
 
 #if DISPLAY_COLLIDERS

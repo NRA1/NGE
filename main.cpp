@@ -19,6 +19,7 @@
 #include "enums/layout_origin.hpp"
 #include "enums/layout_flags.hpp"
 #include "game/game_component_type.hpp"
+#include "interface/replay_stage.hpp"
 
 void run();
 
@@ -27,14 +28,17 @@ int arenas = 1;
 
 GameWindow *window;
 WorldStage *world_stage;
+ReplayStage *replay_stage = nullptr;
 
 TextWidget *enemies_widget;
 TextWidget *arenas_widget;
 
 RectWidget *background;
+ButtonWidget *replay_btn;
 ButtonWidget *save_btn;
 ButtonWidget *load_btn;
 ButtonWidget *exit_btn;
+ButtonWidget *return_btn;
 
 
 namespace delegates
@@ -44,7 +48,7 @@ namespace delegates
 
     bool collisionDelegate(WorldStage *stage, Object *object, Object *collider)
     {
-        if(object->name().starts_with("bullet"))
+        if (object->name().starts_with("bullet"))
         {
             auto adamage = object->findComponent("damage");
             if (adamage != nullptr && adamage->type() & PropertyComponentType)
@@ -56,12 +60,12 @@ namespace delegates
                     PropertyComponent<unsigned int> *damage = (PropertyComponent<unsigned int> *) adamage;
                     if (life->value() <= damage->value())
                     {
-                        if(collider->name().starts_with("arena"))
+                        if (collider->name().starts_with("arena"))
                         {
                             arenas--;
                             arenas_widget->setText("Arenas: " + std::to_string(arenas));
                         }
-                        else if(collider->name().starts_with("enemy"))
+                        else if (collider->name().starts_with("enemy"))
                         {
                             enemies--;
                             enemies_widget->setText("Enemies: " + std::to_string(enemies));
@@ -69,7 +73,7 @@ namespace delegates
                         stage->removeObject(collider);
                     }
                     else
-                        life->adjustValue(-((int)damage->value()));
+                        life->adjustValue(-((int) damage->value()));
 
                     stage->removeObject(object);
                     return true;
@@ -81,32 +85,33 @@ namespace delegates
 
     bool inputDelegate(WorldStage *stage, Event *event)
     {
-        if(event->type() == KeyPressEventType)
+        if (event->type() == KeyPressEventType)
         {
-            KeyPressEvent *ev = (KeyPressEvent*)event;
+            KeyPressEvent *ev = (KeyPressEvent *) event;
 
-            if(ev->key() == Key::KeyEscape)
+            if (ev->key() == Key::KeyEscape)
             {
                 menu_visible = !menu_visible;
                 window->setCursorVisibility(menu_visible);
                 stage->setFreeze(menu_visible);
                 background->setVisible(menu_visible);
+                replay_btn->setVisible(menu_visible);
                 save_btn->setVisible(menu_visible);
                 load_btn->setVisible(menu_visible);
                 exit_btn->setVisible(menu_visible);
 
                 return true;
             }
-            if(!menu_visible)
+            if (!menu_visible)
             {
                 Object *player = stage->findObjectByName("player");
-                if(player == nullptr) return true;
+                if (player == nullptr) return true;
                 player->keyPressEvent(ev);
             }
         }
-        else if(event->type() == KeyReleaseEventType)
+        else if (event->type() == KeyReleaseEventType)
         {
-            if(!menu_visible)
+            if (!menu_visible)
             {
                 KeyReleaseEvent *ev = (KeyReleaseEvent *) event;
                 Object *player = stage->findObjectByName("player");
@@ -114,9 +119,9 @@ namespace delegates
                 player->keyReleaseEvent(ev);
             }
         }
-        else if(event->type() == MouseMoveEventType)
+        else if (event->type() == MouseMoveEventType)
         {
-            if(!menu_visible)
+            if (!menu_visible)
             {
                 MouseMoveEvent *ev = (MouseMoveEvent *) event;
 
@@ -125,9 +130,9 @@ namespace delegates
                 player->mouseMoveEvent(ev);
             }
         }
-        else if(event->type() == MousePressEventType)
+        else if (event->type() == MousePressEventType)
         {
-            if(!menu_visible)
+            if (!menu_visible)
             {
                 Object *player = stage->findObjectByName("player");
                 if (player == nullptr) return false;
@@ -156,13 +161,34 @@ namespace delegates
         return true;
     }
 
+    bool replayInputDelegate(ReplayStage *stage, Event *event)
+    {
+        if (event->type() == KeyPressEventType)
+        {
+            KeyPressEvent *ev = (KeyPressEvent *) event;
+
+            if (ev->key() == Key::KeyEscape)
+            {
+                menu_visible = !menu_visible;
+                window->setCursorVisibility(menu_visible);
+                stage->setFreeze(menu_visible);
+                background->setVisible(menu_visible);
+                return_btn->setVisible(menu_visible);
+                exit_btn->setVisible(menu_visible);
+
+                return true;
+            }
+        }
+        return false;
+    }
+
     AbstractComponent *componentLoader(unsigned int type, std::ifstream &ifs)
     {
-        if(type == ComponentType::BarComponentType) return new BarComponent(ifs);
-        else if(type == ComponentType::InputComponentType) return new InputComponent(ifs);
-        else if(type == ComponentType::MeshComponentType) return new MeshComponent(ifs);
-        else if(type == ComponentType::PropertyComponentType) return new PropertyComponent<unsigned int>(ifs);
-        else if(type == GameComponentType::NPCComponentType) return new NPCComponent(ifs);
+        if (type == ComponentType::BarComponentType) return new BarComponent(ifs);
+        else if (type == ComponentType::InputComponentType) return new InputComponent(ifs);
+        else if (type == ComponentType::MeshComponentType) return new MeshComponent(ifs);
+        else if (type == ComponentType::PropertyComponentType) return new PropertyComponent<unsigned int>(ifs);
+        else if (type == GameComponentType::NPCComponentType) return new NPCComponent(ifs);
         throw "Unknown type";
     }
 
@@ -172,7 +198,7 @@ namespace delegates
         {
             SaveManager::dump(world_stage, ":/save/save1.dat");
         }
-        catch(char *err)
+        catch (char *err)
         {
             log() - Critical < "Failed to save:" < err;
         }
@@ -190,7 +216,8 @@ namespace delegates
             Object *player = world_stage_t->findObjectByName("player");
             world_stage_t->camera()->setTargetObject(player);
             world_stage_t->setFreeze(true);
-            window->deleteStage(world_stage);
+            window->eraseStage(world_stage);
+            delete world_stage;
             world_stage = world_stage_t;
             window->insertStage(world_stage, 0);
         }
@@ -204,6 +231,56 @@ namespace delegates
     bool exit_btn_handler()
     {
         window->close();
+        return true;
+    }
+
+    void replay_finished_handler(ReplayStage *)
+    {
+        menu_visible = true;
+        window->setCursorVisibility(menu_visible);
+        background->setVisible(menu_visible);
+        return_btn->setVisible(menu_visible);
+        exit_btn->setVisible(menu_visible);
+    }
+
+    bool replay_btn_handler()
+    {
+        replay_stage = new ReplayStage(":/trackings/track1.dat");
+        Object *object = new Object("player");
+        MeshComponent *component = new MeshComponent("mesh", ":/models/bot/bot4.obj");
+        object->addComponent(component);
+        replay_stage->setObject(object);
+        replay_stage->setInputDelegate(delegates::replayInputDelegate);
+        replay_stage->setFinishedDelegate(delegates::replay_finished_handler);
+        replay_stage->setFreeze(true);
+
+        Ground *ground = new Ground(Rect(-1000, -1000, 2000, 2000), ":/models/ground/color.jpg");
+        Camera *camera = new Camera();
+        replay_stage->setGround(ground);
+        replay_stage->setCamera(camera);
+        camera->setTargetObject(object);
+        camera->setPosition(Vec3(0.0f, 300.0f, -200.0f));
+
+        window->eraseStage(world_stage);
+        window->insertStage(replay_stage, 0);
+        return_btn->setVisible(true);
+        replay_btn->setVisible(false);
+        save_btn->setVisible(false);
+        load_btn->setVisible(false);
+        return true;
+    }
+
+    bool return_btn_handler()
+    {
+        window->insertStage(world_stage, 0);
+        window->eraseStage(replay_stage);
+        delete replay_stage;
+        replay_stage = nullptr;
+        replay_btn->setVisible(true);
+        return_btn->setVisible(false);
+        save_btn->setVisible(true);
+        load_btn->setVisible(true);
+
         return true;
     }
 }
@@ -248,6 +325,8 @@ void run()
         InputComponent *input = new InputComponent("input");
         object->addComponent(input);
         world_stage->addObject(object);
+        world_stage->setTrackFilePath(":/trackings/track1.dat");
+        world_stage->setTrackObject("player");
         for(int i = 0; i < enemies; i++)
         {
             Object *enemy = new Object("enemy" + std::to_string(i));
@@ -290,6 +369,16 @@ void run()
         background->setVisible(false);
         graph->addWidget(background);
 
+        replay_btn = new ButtonWidget("Replay", Rect(-150, 95, 300, 50), &delegates::replay_btn_handler,
+                                      Vec4(1, 1, 1, 1), Vec4(0, 0, 0, 1), 40);
+        replay_btn->setZPos(-0.5);
+        replay_btn->setVisible(false);
+
+        return_btn = new ButtonWidget("Return", Rect(-150, -25, 300, 50), &delegates::return_btn_handler,
+                                      Vec4(1, 1, 1, 1), Vec4(0, 0, 0, 1), 40);
+        return_btn->setZPos(-0.5);
+        return_btn->setVisible(false);
+
         save_btn = new ButtonWidget("Save", Rect(-150, 35, 300, 50), &delegates::save_btn_handler,
                                                   Vec4(1, 1, 1, 1), Vec4(0, 0, 0, 1), 40);
         save_btn->setZPos(-0.5);
@@ -304,8 +393,10 @@ void run()
                                                   Vec4(1, 1, 1, 1), Vec4(0, 0, 0, 1), 40);
         exit_btn->setZPos(-0.5);
         exit_btn->setVisible(false);
+        graph->addWidget(replay_btn);
         graph->addWidget(save_btn);
         graph->addWidget(load_btn);
+        graph->addWidget(return_btn);
         graph->addWidget(exit_btn);
         window->setCursorVisibility(false);
         window->pushStage(world_stage);

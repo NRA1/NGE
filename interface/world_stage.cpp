@@ -1,9 +1,10 @@
 #include "world_stage.hpp"
-#include "../infrastructure/logger.hpp"
-#include "../world/debug_box.hpp"
+#include <utility>
+#include "../data_objects/track_stamp.hpp"
 
-WorldStage::WorldStage() : viewport_(Size(-1, -1)), camera_(nullptr), ground_(nullptr), shader_program_(nullptr),
-                           visible_(false), collision_delegate_(nullptr), input_delegate_(nullptr), offwold_delegate_(nullptr)
+WorldStage::WorldStage() : camera_(nullptr), ground_(nullptr), shader_program_(nullptr), visible_(false),
+                           viewport_(Size(-1, -1)), tracked_object_(nullptr), track_file_path_(std::nullopt), track_file_(std::nullopt),
+                           collision_delegate_(nullptr), input_delegate_(nullptr), offwold_delegate_(nullptr)
 {
 #if DISPLAY_COLLIDERS
     collider_display_ = new DebugBox("colliderDisplay", PositionedBox(0, 0, 0, 0, 0, 0));
@@ -88,6 +89,15 @@ void WorldStage::onAppearing()
     {
         object->load();
     }
+    if(track_file_path_.has_value())
+    {
+        track_file_ = std::ofstream(ResourceLoader::fullPath(track_file_path_.value()), std::ios::binary);
+        if(!track_file_->is_open())
+        {
+            log() - Critical < "Failed to open track file. Object will not be tracked.";
+            track_file_ = std::nullopt;
+        }
+    }
     visible_ = true;
 }
 
@@ -95,6 +105,13 @@ void WorldStage::onAppearing()
 void WorldStage::onDisappearing()
 {
     visible_ = false;
+
+    if(track_file_.has_value())
+    {
+        if(track_file_->is_open()) track_file_->close();
+        track_file_ = std::nullopt;
+    }
+
     for(Object *object : objects_)
     {
         object->unload();
@@ -136,6 +153,7 @@ void WorldStage::applyPhysics(unsigned int time)
 #if DISPLAY_COLLIDERS
     collider_boxes_.clear();
 #endif
+
     for(const auto &obj : objects_)
     {
         std::optional<Rotation> rot = obj->motionVector().grabbedRotation();
@@ -175,7 +193,11 @@ void WorldStage::applyPhysics(unsigned int time)
                && interface::checkCollision(aabb.y(), aabb.y() + aabb.height(), collider_aabb.y(), collider_aabb.y() + collider_aabb.height())
                && interface::checkCollision(aabb.z(), aabb.z() + aabb.depth(), collider_aabb.z(), collider_aabb.z() + collider_aabb.depth()))
             {
-                if(collision_delegate_ != nullptr && collision_delegate_(this, obj, collider)) skip_move = true;
+                if(collision_delegate_ != nullptr && collision_delegate_(this, obj, collider))
+                {
+                    skip_move = true;
+                    break;
+                }
             }
         }
         if(!skip_move)
@@ -203,6 +225,15 @@ void WorldStage::applyPhysics(unsigned int time)
         camera()->setPosition(camera()->position() + distance);
         camera()->setRotation(physics_rot);
     }
+
+    if(track_file_.has_value() && tracked_object_ != nullptr && track_file_->is_open())
+    {
+        TrackStamp stamp;
+        stamp.Pos = tracked_object_->position();
+        stamp.Rotation = tracked_object_->rotation().vec3();
+        stamp.Delta = time;
+        track_file_->write((char*)&stamp, sizeof(TrackStamp));
+    }
 }
 
 WorldStage::~WorldStage()
@@ -216,6 +247,7 @@ WorldStage::~WorldStage()
         delete object;
     }
     delete camera_;
+    delete ground_;
     delete shader_program_;
 }
 
@@ -249,4 +281,22 @@ void WorldStage::setOffworldDelegate(bool (*offworld_delegate)(WorldStage *, Obj
 void WorldStage::setFreeze(bool freeze)
 {
     freeze_ = freeze;
+}
+
+void WorldStage::setTrackObject(const std::optional<std::string> &object)
+{
+    if(object.has_value())
+    {
+        tracked_object_ = findObjectByName(object.value());
+    } else tracked_object_ = nullptr;
+}
+
+void WorldStage::setTrackFilePath(std::optional<std::string> path)
+{
+    track_file_path_ = std::move(path);
+}
+
+bool WorldStage::freeze() const
+{
+    return freeze_;
 }

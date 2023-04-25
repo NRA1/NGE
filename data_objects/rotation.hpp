@@ -2,10 +2,13 @@
 #define NGE_ROTATION_HPP
 
 
+#include "vec.hpp"
+
 class Rotation
 {
 public:
     Rotation();
+    Rotation(const Vec3 &vec);
     Rotation(float roll, float pitch, float yaw);
 
     float roll() const;
@@ -14,6 +17,7 @@ public:
     void setPitch(float pitch);
     float yaw() const;
     void setYaw(float yaw);
+    Vec3 vec3() const;
 
     Rotation operator+(const Rotation &x) const;
     Rotation operator*(float x) const;

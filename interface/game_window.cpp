@@ -102,14 +102,13 @@ void GameWindow::close()
     native_->setShouldClose(true);
 }
 
-void GameWindow::deleteStage(AbstractStage *stage)
+void GameWindow::eraseStage(AbstractStage *stage)
 {
     if(shown_)
     {
         stage->onDisappearing();
     }
     erase_if(stages_, [stage](AbstractStage *x) { return x == stage; });
-    delete stage;
 }
 
 void GameWindow::insertStage(AbstractStage *stage, unsigned int index)

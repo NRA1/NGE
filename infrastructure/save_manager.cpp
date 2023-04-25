@@ -4,7 +4,7 @@ AbstractComponent *(*SaveManager::component_factory_)(unsigned int, std::ifstrea
 
 WorldStage *SaveManager::load(const std::string &path)
 {
-    std::ifstream ifs(ResourceLoader::fullPath(path));
+    std::ifstream ifs(ResourceLoader::fullPath(path), std::ios::binary);
     if(!ifs.is_open()) throw "File not open";
 
     WorldStage *stage = new WorldStage();
@@ -20,7 +20,7 @@ WorldStage *SaveManager::load(const std::string &path)
 
 void SaveManager::dump(WorldStage *world_stage, const std::string &path)
 {
-    std::ofstream ofs(ResourceLoader::fullPath(path));
+    std::ofstream ofs(ResourceLoader::fullPath(path), std::ios::binary);
     if(!ofs.is_open()) throw "File not open";
     dump_objects(world_stage->objects_, ofs);
     dump_camera(*world_stage->camera_, ofs);
