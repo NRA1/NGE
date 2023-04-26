@@ -144,6 +144,7 @@ bool WorldStage::handleEvent(Event *event)
 
 void WorldStage::setGround(Ground *ground)
 {
+    delete ground_;
     ground_ = ground;
     ground_->setShaderProgram(&shader_program_);
 }

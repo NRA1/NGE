@@ -2,6 +2,8 @@
 #define NGE_RECT_HPP
 
 
+#include "vec.hpp"
+
 class Rect
 {
 public:
@@ -15,6 +17,8 @@ public:
     void setWidth(float width);
     float height() const;
     void setHeight(float height);
+
+    Rect operator*(Mat4 mat) const;
 
 private:
     float x_;

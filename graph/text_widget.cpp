@@ -4,8 +4,15 @@
 
 #include <utility>
 
-TextWidget::TextWidget(std::string text, std::string font, unsigned int font_size, Vec4 color)
-        : text_(std::move(text)), font_(std::move(font)), font_size_(font_size), color_(color), bounding_rect_(Rect())
+TextWidget::TextWidget(std::string text, std::string font, unsigned int font_size, Vec4 color, Widget *parent)
+        : Widget(parent), text_(std::move(text)), font_(std::move(font)), font_size_(font_size), color_(color),
+          bounding_rect_(Rect())
+{
+
+}
+
+TextWidget::TextWidget(std::string text, Widget *parent)
+        : Widget(parent), text_(std::move(text)), font_(":/fonts/arial.ttf"), font_size_(20), color_(1, 1, 1, 1)
 {
 
 }
@@ -95,9 +102,12 @@ const std::string &TextWidget::text() const
 
 void TextWidget::setText(const std::string &text)
 {
-    unload();
+    characters_.clear();
     text_ = text;
-    load();
+    for(char c : text_)
+        characters_[c] = ResourceLoader::loadCharacter(font_, c, font_size_);
+
+    calculateBoundingRect();
 }
 
 const std::string &TextWidget::font() const

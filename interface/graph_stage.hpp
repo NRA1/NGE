@@ -25,10 +25,17 @@ public:
     void addWidget(Widget *widget);
     void deleteWidget(Widget *widget);
 
+    void setFallbackEventHandler(bool (*fallbackEventHandler)(GraphStage *, Event *));
+
 private:
+    Mat4 applyLayout(const Widget *widget) const;
     std::list<Widget *> findUnderlyingWidgets(Vec2 pos) const;
     std::list<Widget *> maskList(const std::list<Widget*>& source, const std::list<Widget*>& mask) const;
     std::map<unsigned int, ShaderProgram *> gatherShaderPrograms(unsigned int types);
+
+    void recurseLoad(Widget *widget);
+    void recurseUnload(Widget *widget);
+    void recurseRender(Widget *widget, Mat4 parent_mat);
 
     Size viewport_;
     std::map<unsigned int, ShaderProgram *> shader_programs_;
@@ -37,6 +44,8 @@ private:
 
     std::optional<Vec2> last_mouse_pos_;
     std::list<Widget*> entered_widgets_;
+
+    bool (*fallback_event_handler_)(GraphStage *, Event*);
 };
 
 

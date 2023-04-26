@@ -1,7 +1,7 @@
 #include "rect_widget.hpp"
 #include "../enums/shader_program_type.hpp"
 
-RectWidget::RectWidget(Rect rect, Vec4 color) : rect_(rect), color_(color), VBO_(0), VAO_(0), EBO_(0)
+RectWidget::RectWidget(Rect rect, Vec4 color, Widget *parent) : Widget(parent), rect_(rect), color_(color), VBO_(0), VAO_(0), EBO_(0)
 {
 
 }

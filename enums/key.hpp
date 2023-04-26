@@ -100,4 +100,9 @@ enum Key
     KeyAltGr = 65027,
 };
 
+namespace key
+{
+    char toChar(Key key);
+}
+
 #endif //NGE_KEY_HPP

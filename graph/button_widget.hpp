@@ -3,6 +3,7 @@
 
 
 #include "widget.hpp"
+#include "../interface/interface_helpers.hpp"
 #include "rect_widget.hpp"
 #include "text_widget.hpp"
 

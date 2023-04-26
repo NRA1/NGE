@@ -20,14 +20,16 @@ void GraphStage::onAppearing()
         sp.second->setMat4("projection", projection);
 
     for(auto &widget : widgets_)
-        widget->load();
+    {
+        recurseLoad(widget);
+    }
     shown_ = true;
 }
 
 void GraphStage::onDisappearing()
 {
     for(auto &widget : widgets_)
-        widget->unload();
+        recurseUnload(widget);
     for(auto &sp : shader_programs_)
         delete sp.second;
     shader_programs_.clear();
@@ -53,14 +55,15 @@ bool GraphStage::handleEvent(Event *event)
         std::list<Widget*> underlying = findUnderlyingWidgets(last_mouse_pos_.value());
         if(underlying.empty()) return false;
         for(auto &widget : underlying)
-            if(widget->keyPressEvent(ev)) break;
+            if(widget->keyPressEvent(ev)) return true;
     }
     if(event->type() & EventType::KeyReleaseEventType && last_mouse_pos_.has_value())
     {
         KeyReleaseEvent *ev = (KeyReleaseEvent*)event;
         std::list<Widget*> underlying = findUnderlyingWidgets(last_mouse_pos_.value());
+        if(underlying.empty()) return false;
         for(auto &widget : underlying)
-            if(widget->keyReleaseEvent(ev)) break;
+            if(widget->keyReleaseEvent(ev)) return true;
     }
     if(event->type() & EventType::MouseMoveEventType)
     {
@@ -75,6 +78,7 @@ bool GraphStage::handleEvent(Event *event)
             widget->mouseLeaveEvent();
         last_mouse_pos_ = new_pos;
         entered_widgets_ = underlying;
+        if(underlying.empty()) return false;
         for(auto &widget : underlying)
             if(widget->mouseMoveEvent(ev)) return true;
     }
@@ -83,6 +87,7 @@ bool GraphStage::handleEvent(Event *event)
         MousePressEvent *ev = (MousePressEvent*)event;
         Vec2 new_pos = Vec2(ev->x(), ev->y());
         std::list<Widget*> underlying = findUnderlyingWidgets(new_pos);
+        if(underlying.empty()) return false;
         for (auto &widget : underlying)
         {
             if(widget->mousePressEvent(ev)) return true;
@@ -93,12 +98,15 @@ bool GraphStage::handleEvent(Event *event)
         MouseReleaseEvent *ev = (MouseReleaseEvent*)event;
         Vec2 new_pos = Vec2(ev->x(), ev->y());
         std::list<Widget*> underlying = findUnderlyingWidgets(new_pos);
+        if(underlying.empty()) return false;
         for (auto &widget : underlying)
         {
             if(widget->mouseReleaseEvent(ev)) return true;
         }
     }
 
+    if(fallback_event_handler_ != nullptr)
+        return fallback_event_handler_(this, event);
     return false;
 }
 
@@ -107,57 +115,7 @@ void GraphStage::render(unsigned int)
     for(auto &widget : widgets_)
     {
         if(!widget->visible()) continue;
-
-        std::map<unsigned int, ShaderProgram *> shader_programs = gatherShaderPrograms(widget->requiredShaderPrograms());
-        Mat4 mat = Mat4(1.0f);
-
-        Vec2 pos;
-        if(widget->layoutOrigin() & LayoutOrigin::Top)
-        {
-            if(widget->layoutFlags() & LayoutFlags::YRelative)
-                pos.y = (widget->pos().y + 0.5f) * viewport_.height();
-            else
-                pos.y = widget->pos().y + (viewport_.height() / 2);
-        }
-        else if(widget->layoutOrigin() & LayoutOrigin::Bottom)
-        {
-            if(widget->layoutFlags() & LayoutFlags::YRelative)
-                pos.y = (widget->pos().y - 0.5f) * viewport_.height();
-            else
-                pos.y = widget->pos().y - (viewport_.height() / 2);
-        }
-        else if(widget->layoutOrigin() & LayoutOrigin::VCenter)
-            pos.y = widget->pos().y;
-        if(widget->layoutOrigin() & LayoutOrigin::Left)
-        {
-            if(widget->layoutFlags() & LayoutFlags::XRelative)
-                pos.x = (widget->pos().x - 0.5f) * viewport_.width();
-            else
-                pos.x = widget->pos().x - (viewport_.width() / 2);
-        }
-        else if(widget->layoutOrigin() & LayoutOrigin::Right)
-        {
-            if(widget->layoutFlags() & LayoutFlags::XRelative)
-                pos.x = (widget->pos().x + 0.5f) * viewport_.width();
-            else
-                pos.x = widget->pos().x + (viewport_.width() / 2);
-        }
-        else if(widget->layoutOrigin() & LayoutOrigin::HCenter)
-            pos.x = widget->pos().x;
-
-        mat = glm::translate(mat, Vec3(pos, widget->zPos()));
-
-        float scale_x = 1, scale_y = 1;
-        if(widget->layoutFlags() & LayoutFlags::WidthRelative)
-            scale_x = viewport_.width();
-        if(widget->layoutFlags() & LayoutFlags::HeightRelative)
-            scale_y = viewport_.height();
-
-        mat = glm::scale(mat, Vec3(scale_x, scale_y, 1));
-
-        for(auto &sp : shader_programs)
-            sp.second->setMat4("widget", mat);
-        widget->render(shader_programs);
+        recurseRender(widget, Mat4(1.0f));
     }
 }
 
@@ -180,9 +138,10 @@ std::list<Widget *> GraphStage::findUnderlyingWidgets(Vec2 pos) const
     for(const auto &widget : widgets_)
     {
         if(!widget->visible()) continue;
-        Rect trans_bounds = widget->boundingRect();
-        trans_bounds.setX(trans_bounds.x() + widget->pos().x);
-        trans_bounds.setY(trans_bounds.y() + widget->pos().y);
+
+        Mat4 mat = applyLayout(widget);
+
+        Rect trans_bounds = widget->boundingRect() * mat;
 
         if(trans_bounds.x() <= pos.x && trans_bounds.x() + trans_bounds.width() >= pos.x
            && trans_bounds.y() <= pos.y && trans_bounds.y() + trans_bounds.height() >= pos.y)
@@ -217,3 +176,91 @@ std::map<unsigned int, ShaderProgram *> GraphStage::gatherShaderPrograms(unsigne
     return programs_;
 }
 
+
+Mat4 GraphStage::applyLayout(const Widget *widget) const
+{
+    Mat4 mat = Mat4(1.0f);
+
+    Vec2 pos;
+    if(widget->layoutOrigin() & LayoutOrigin::Top)
+    {
+        if(widget->layoutFlags() & LayoutFlags::YRelative)
+            pos.y = (widget->pos().y + 0.5f) * viewport_.height();
+        else
+            pos.y = widget->pos().y + (viewport_.height() / 2);
+    }
+    else if(widget->layoutOrigin() & LayoutOrigin::Bottom)
+    {
+        if(widget->layoutFlags() & LayoutFlags::YRelative)
+            pos.y = (widget->pos().y - 0.5f) * viewport_.height();
+        else
+            pos.y = widget->pos().y - (viewport_.height() / 2);
+    }
+    else if(widget->layoutOrigin() & LayoutOrigin::VCenter)
+        pos.y = widget->pos().y;
+    if(widget->layoutOrigin() & LayoutOrigin::Left)
+    {
+        if(widget->layoutFlags() & LayoutFlags::XRelative)
+            pos.x = (widget->pos().x - 0.5f) * viewport_.width();
+        else
+            pos.x = widget->pos().x - (viewport_.width() / 2);
+    }
+    else if(widget->layoutOrigin() & LayoutOrigin::Right)
+    {
+        if(widget->layoutFlags() & LayoutFlags::XRelative)
+            pos.x = (widget->pos().x + 0.5f) * viewport_.width();
+        else
+            pos.x = widget->pos().x + (viewport_.width() / 2);
+    }
+    else if(widget->layoutOrigin() & LayoutOrigin::HCenter)
+        pos.x = widget->pos().x;
+
+    mat = glm::translate(mat, Vec3(pos, widget->zPos()));
+
+    float scale_x = 1, scale_y = 1;
+    if(widget->layoutFlags() & LayoutFlags::WidthRelative)
+        scale_x = viewport_.width() / 100;
+    if(widget->layoutFlags() & LayoutFlags::HeightRelative)
+        scale_y = viewport_.height() / 100;
+
+    mat = glm::scale(mat, Vec3(scale_x, scale_y, 1));
+    return mat;
+}
+
+void GraphStage::recurseLoad(Widget *widget)
+{
+    widget->load();
+    for (auto &child : widget->children())
+    {
+        recurseLoad(child);
+    }
+}
+
+void GraphStage::recurseUnload(Widget *widget)
+{
+    for (auto &child : widget->children())
+    {
+        recurseUnload(child);
+    }
+    widget->unload();
+}
+
+void GraphStage::recurseRender(Widget *widget, Mat4 parent_mat)
+{
+    std::map<unsigned int, ShaderProgram *> shader_programs = gatherShaderPrograms(widget->requiredShaderPrograms());
+    Mat4 mat = parent_mat * applyLayout(widget);
+
+    for(auto &sp : shader_programs)
+    {
+        sp.second->setMat4("widget", mat);
+    }
+    widget->render(shader_programs);
+
+    for(auto &child : widget->children())
+        recurseRender(child, mat);
+}
+
+void GraphStage::setFallbackEventHandler(bool (*fallbackEventHandler)(GraphStage *, Event *))
+{
+    fallback_event_handler_ = fallbackEventHandler;
+}

@@ -1,288 +1,262 @@
-#include <ft2build.h>
-#include FT_FREETYPE_H
-#include "infrastructure/logger.hpp"
-#include "infrastructure/game.hpp"
-#include "data_objects/size.hpp"
-#include "interface/game_window.hpp"
-#include "interface/world_stage.hpp"
-#include "world/object.hpp"
-#include "world/mesh_component.hpp"
-#include "world/input_component.hpp"
-#include "world/debug_box.hpp"
-#include "game/npc_component.hpp"
-#include "interface/graph_stage.hpp"
-#include "graph/rect_widget.hpp"
-#include "graph/text_widget.hpp"
-#include "world/bar_component.h"
-#include "world/property_component.h"
-#include "graph/button_widget.hpp"
-#include "enums/layout_origin.hpp"
-#include "enums/layout_flags.hpp"
-#include "game/game_component_type.hpp"
-#include "interface/replay_stage.hpp"
+#include "main.hpp"
 
-void run();
-
-int enemies = 3;
-int arenas = 1;
-
-GameWindow *window;
-WorldStage *world_stage;
-ReplayStage *replay_stage = nullptr;
-
-TextWidget *enemies_widget;
-TextWidget *arenas_widget;
-
-RectWidget *background;
-ButtonWidget *replay_btn;
-ButtonWidget *save_btn;
-ButtonWidget *load_btn;
-ButtonWidget *exit_btn;
-ButtonWidget *return_btn;
-
-
-namespace delegates
+bool delegates::collisionDelegate(WorldStage *stage, Object *object, Object *collider)
 {
-    unsigned int bullet_counter = 0;
-    bool menu_visible = false;
-
-    bool collisionDelegate(WorldStage *stage, Object *object, Object *collider)
+    if (object->name().starts_with("bullet"))
     {
-        if (object->name().starts_with("bullet"))
+        auto adamage = object->findComponent("damage");
+        if (adamage != nullptr && adamage->type() & PropertyComponentType)
         {
-            auto adamage = object->findComponent("damage");
-            if (adamage != nullptr && adamage->type() & PropertyComponentType)
+            auto alife = collider->findComponent("life");
+            if (alife != nullptr && alife->type() & BarComponentType)
             {
-                auto alife = collider->findComponent("life");
-                if (alife != nullptr && alife->type() & BarComponentType)
+                BarComponent *life = (BarComponent *) alife;
+                PropertyComponent<unsigned int> *damage = (PropertyComponent<unsigned int> *) adamage;
+                if (life->value() <= damage->value())
                 {
-                    BarComponent *life = (BarComponent *) alife;
-                    PropertyComponent<unsigned int> *damage = (PropertyComponent<unsigned int> *) adamage;
-                    if (life->value() <= damage->value())
+                    if (collider->name().starts_with("arena"))
                     {
-                        if (collider->name().starts_with("arena"))
-                        {
-                            arenas--;
-                            arenas_widget->setText("Arenas: " + std::to_string(arenas));
-                        }
-                        else if (collider->name().starts_with("enemy"))
-                        {
-                            enemies--;
-                            enemies_widget->setText("Enemies: " + std::to_string(enemies));
-                        }
-                        stage->removeObject(collider);
+                        g_arenas--;
+                        g_arenas_widget->setText("Arenas: " + std::to_string(g_arenas));
                     }
-                    else
-                        life->adjustValue(-((int) damage->value()));
+                    else if (collider->name().starts_with("enemy"))
+                    {
+                        g_enemies--;
+                        g_enemies_widget->setText("Enemies: " + std::to_string(g_enemies));
+                    }
+                    stage->removeObject(collider);
 
-                    stage->removeObject(object);
-                    return true;
+                    if(g_enemies == 0 && g_arenas == 0)
+                    {
+                        setLevel(g_level + 1);
+                        return true;
+                    }
                 }
-            }
-        }
-        return true;
-    }
+                else
+                    life->adjustValue(-((int) damage->value()));
 
-    bool inputDelegate(WorldStage *stage, Event *event)
-    {
-        if (event->type() == KeyPressEventType)
-        {
-            KeyPressEvent *ev = (KeyPressEvent *) event;
-
-            if (ev->key() == Key::KeyEscape)
-            {
-                menu_visible = !menu_visible;
-                window->setCursorVisibility(menu_visible);
-                stage->setFreeze(menu_visible);
-                background->setVisible(menu_visible);
-                replay_btn->setVisible(menu_visible);
-                save_btn->setVisible(menu_visible);
-                load_btn->setVisible(menu_visible);
-                exit_btn->setVisible(menu_visible);
-
-                return true;
-            }
-            if (!menu_visible)
-            {
-                Object *player = stage->findObjectByName("player");
-                if (player == nullptr) return true;
-                player->keyPressEvent(ev);
-            }
-        }
-        else if (event->type() == KeyReleaseEventType)
-        {
-            if (!menu_visible)
-            {
-                KeyReleaseEvent *ev = (KeyReleaseEvent *) event;
-                Object *player = stage->findObjectByName("player");
-                if (player == nullptr) return true;
-                player->keyReleaseEvent(ev);
-            }
-        }
-        else if (event->type() == MouseMoveEventType)
-        {
-            if (!menu_visible)
-            {
-                MouseMoveEvent *ev = (MouseMoveEvent *) event;
-
-                Object *player = stage->findObjectByName("player");
-                if (player == nullptr) return true;
-                player->mouseMoveEvent(ev);
-            }
-        }
-        else if (event->type() == MousePressEventType)
-        {
-            if (!menu_visible)
-            {
-                Object *player = stage->findObjectByName("player");
-                if (player == nullptr) return false;
-                Mat4 mat = Mat4(1);
-                mat = glm::rotate(mat, glm::radians(360 - player->rotation().roll()), Vec3(0, 1, 0));
-                Vec4 rel_start_pos = Vec4(0, 50, 50, 0) * mat;
-                Object *bullet = new Object("bullet" + std::to_string(bullet_counter++));
-                bullet->setPosition(Vec3(player->position().x + rel_start_pos.x, player->position().y + rel_start_pos.y,
-                                         player->position().z + rel_start_pos.z));
-                MeshComponent *mesh_comp = new MeshComponent("mesh", ":/models/bullet/bullet.obj");
-                bullet->addComponent(mesh_comp);
-                PropertyComponent<unsigned int> *damage_component = new PropertyComponent<unsigned int>("damage", 30);
-                bullet->addComponent(damage_component);
-                stage->addObject(bullet);
-                auto mvo = bullet->motionVector().generateManipulationObject(false);
-                Vec4 rotated = Vec4(0, 0, 200, 0) * mat;
-                mvo->setVelocity(rotated);
-            }
-        }
-        return true;
-    }
-
-    bool offworldDelegate(WorldStage *stage, Object *obj)
-    {
-        stage->removeObject(obj);
-        return true;
-    }
-
-    bool replayInputDelegate(ReplayStage *stage, Event *event)
-    {
-        if (event->type() == KeyPressEventType)
-        {
-            KeyPressEvent *ev = (KeyPressEvent *) event;
-
-            if (ev->key() == Key::KeyEscape)
-            {
-                menu_visible = !menu_visible;
-                window->setCursorVisibility(menu_visible);
-                stage->setFreeze(menu_visible);
-                background->setVisible(menu_visible);
-                return_btn->setVisible(menu_visible);
-                exit_btn->setVisible(menu_visible);
-
+                stage->removeObject(object);
                 return true;
             }
         }
-        return false;
     }
-
-    AbstractComponent *componentLoader(unsigned int type, std::ifstream &ifs)
+    else if(object->name().starts_with("enemy") && collider->name() == "player")
     {
-        if (type == ComponentType::BarComponentType) return new BarComponent(ifs);
-        else if (type == ComponentType::InputComponentType) return new InputComponent(ifs);
-        else if (type == ComponentType::MeshComponentType) return new MeshComponent(ifs);
-        else if (type == ComponentType::PropertyComponentType) return new PropertyComponent<unsigned int>(ifs);
-        else if (type == GameComponentType::NPCComponentType) return new NPCComponent(ifs);
-        throw "Unknown type";
+        stage->setFreeze(true);
+        setMenu(MenuMode::Lost);
+        return true;
     }
+    return true;
+}
 
-    bool save_btn_handler()
+bool delegates::inputDelegate(WorldStage *stage, Event *event)
+{
+    if (event->type() == KeyPressEventType)
     {
-        try
+        KeyPressEvent *ev = (KeyPressEvent *) event;
+
+        if (ev->key() == Key::KeyEscape)
         {
-            SaveManager::dump(world_stage, ":/save/save1.dat");
+            setMenu(g_menu_mode == MenuMode::Play ? MenuMode::Hidden : MenuMode::Play);
+            stage->setFreeze(g_menu_mode != MenuMode::Hidden);
+            return true;
         }
-        catch (char *err)
+        Object *player = stage->findObjectByName("player");
+        if (player == nullptr) return true;
+        player->keyPressEvent(ev);
+    }
+    else if (event->type() == KeyReleaseEventType)
+    {
+        KeyReleaseEvent *ev = (KeyReleaseEvent *) event;
+        Object *player = stage->findObjectByName("player");
+        if (player == nullptr) return true;
+        player->keyReleaseEvent(ev);
+    }
+    else if (event->type() == MouseMoveEventType)
+    {
+        MouseMoveEvent *ev = (MouseMoveEvent *) event;
+
+        Object *player = stage->findObjectByName("player");
+        if (player == nullptr) return true;
+        player->mouseMoveEvent(ev);
+    }
+    else if (event->type() == MousePressEventType)
+    {
+        Object *player = stage->findObjectByName("player");
+        if (player == nullptr) return false;
+        Mat4 mat = Mat4(1);
+        mat = glm::rotate(mat, glm::radians(360 - player->rotation().roll()), Vec3(0, 1, 0));
+        Vec4 rel_start_pos = Vec4(0, 50, 50, 0) * mat;
+        Object *bullet = new Object("bullet" + std::to_string(bullet_counter++));
+        bullet->setPosition(Vec3(player->position().x + rel_start_pos.x, player->position().y + rel_start_pos.y,
+                                 player->position().z + rel_start_pos.z));
+        MeshComponent *mesh_comp = new MeshComponent("mesh", ":/models/bullet/bullet.obj");
+        bullet->addComponent(mesh_comp);
+        PropertyComponent<unsigned int> *damage_component = new PropertyComponent<unsigned int>("damage", 30);
+        bullet->addComponent(damage_component);
+        stage->addObject(bullet);
+        auto mvo = bullet->motionVector().generateManipulationObject(false);
+        Vec4 rotated = Vec4(0, 0, 200, 0) * mat;
+        mvo->setVelocity(rotated);
+    }
+    return true;
+}
+
+bool delegates::offworldDelegate(WorldStage *stage, Object *obj)
+{
+    stage->removeObject(obj);
+    return true;
+}
+
+bool delegates::replayInputDelegate(ReplayStage *stage, Event *event)
+{
+    if (event->type() == KeyPressEventType)
+    {
+        KeyPressEvent *ev = (KeyPressEvent *) event;
+
+        if (ev->key() == Key::KeyEscape)
         {
-            log() - Critical < "Failed to save:" < err;
-        }
-        return true;
-    }
+            setMenu(g_menu_mode == MenuMode::Hidden ? MenuMode::Replay : MenuMode::Hidden);
+            stage->setFreeze(g_menu_mode != MenuMode::Hidden);
 
-    bool load_btn_handler()
+            return true;
+        }
+    }
+    return false;
+}
+
+bool delegates::graphInputDelegate(GraphStage *, Event *event)
+{
+    if(event->type() == EventType::KeyPressEventType)
     {
-        try
+        KeyPressEvent *ev = (KeyPressEvent*)event;
+        if(ev->key() == Key::KeyEscape && (g_menu_mode == MenuMode::Replay || g_menu_mode == MenuMode::Play))
         {
-            WorldStage *world_stage_t = SaveManager::load(":/save/save1.dat");
-            world_stage_t->setCollisionDelegate(&delegates::collisionDelegate);
-            world_stage_t->setInputDelegate(&delegates::inputDelegate);
-            world_stage_t->setOffworldDelegate(&delegates::offworldDelegate);
-            Object *player = world_stage_t->findObjectByName("player");
-            world_stage_t->camera()->setTargetObject(player);
-            world_stage_t->setFreeze(true);
-            window->eraseStage(world_stage);
-            delete world_stage;
-            world_stage = world_stage_t;
-            window->insertStage(world_stage, 0);
+            if(g_menu_mode == MenuMode::Replay)
+                g_replay_stage->setFreeze(false);
+            else if(g_menu_mode == MenuMode::Play)
+                g_world_stage->setFreeze(false);
+            setMenu(MenuMode::Hidden);
+
+            return true;
         }
-        catch (const char *err)
+        if(g_menu_mode == MenuMode::Login)
         {
-            log() - Critical < "Failed to load save:" < err;
+            if(ev->key() == Key::KeyBackspace)
+                g_username = g_username.substr(0, g_username.length() - 1);
+            else
+            {
+                char c = key::toChar((Key)ev->key());
+                if(c == 0) return true;
+                if(ev->modifiers() & Modifier::ShiftModifier)
+                    c = (char)toupper(c);
+                g_username = g_username + c;
+            }
+            g_login_entry->setText("Login: " + g_username);
         }
-        return true;
     }
+    return true;
+}
 
-    bool exit_btn_handler()
+
+AbstractComponent *delegates::componentLoader(unsigned int type, std::ifstream &ifs)
+{
+    if (type == ComponentType::BarComponentType) return new BarComponent(ifs);
+    else if (type == ComponentType::InputComponentType) return new InputComponent(ifs);
+    else if (type == ComponentType::MeshComponentType) return new MeshComponent(ifs);
+    else if (type == ComponentType::PropertyComponentType) return new PropertyComponent<unsigned int>(ifs);
+    else if (type == GameComponentType::NPCComponentType) return new NPCComponent(ifs);
+    throw "Unknown type";
+}
+
+bool delegates::save_btn_handler()
+{
+    try
     {
-        window->close();
-        return true;
+        SaveManager::dump(g_world_stage, ":/save/save1.dat");
     }
-
-    void replay_finished_handler(ReplayStage *)
+    catch (char *err)
     {
-        menu_visible = true;
-        window->setCursorVisibility(menu_visible);
-        background->setVisible(menu_visible);
-        return_btn->setVisible(menu_visible);
-        exit_btn->setVisible(menu_visible);
+        log() - Critical < "Failed to save:" < err;
     }
+    return true;
+}
 
-    bool replay_btn_handler()
+bool delegates::load_btn_handler()
+{
+    try
     {
-        replay_stage = new ReplayStage(":/trackings/track1.dat");
-        Object *object = new Object("player");
-        MeshComponent *component = new MeshComponent("mesh", ":/models/bot/bot4.obj");
-        object->addComponent(component);
-        replay_stage->setObject(object);
-        replay_stage->setInputDelegate(delegates::replayInputDelegate);
-        replay_stage->setFinishedDelegate(delegates::replay_finished_handler);
-        replay_stage->setFreeze(true);
-
-        Ground *ground = new Ground(Rect(-1000, -1000, 2000, 2000), ":/models/ground/color.jpg");
-        Camera *camera = new Camera();
-        replay_stage->setGround(ground);
-        replay_stage->setCamera(camera);
-        camera->setTargetObject(object);
-        camera->setPosition(Vec3(0.0f, 300.0f, -200.0f));
-
-        window->eraseStage(world_stage);
-        window->insertStage(replay_stage, 0);
-        return_btn->setVisible(true);
-        replay_btn->setVisible(false);
-        save_btn->setVisible(false);
-        load_btn->setVisible(false);
-        return true;
+        WorldStage *world_stage_t = SaveManager::load(":/save/save1.dat");
+        world_stage_t->setCollisionDelegate(&delegates::collisionDelegate);
+        world_stage_t->setInputDelegate(&delegates::inputDelegate);
+        world_stage_t->setOffworldDelegate(&delegates::offworldDelegate);
+        Object *player = world_stage_t->findObjectByName("player");
+        world_stage_t->camera()->setTargetObject(player);
+        world_stage_t->setFreeze(true);
+        g_window->eraseStage(g_world_stage);
+        delete g_world_stage;
+        g_world_stage = world_stage_t;
+        g_window->insertStage(g_world_stage, 0);
     }
-
-    bool return_btn_handler()
+    catch (const char *err)
     {
-        window->insertStage(world_stage, 0);
-        window->eraseStage(replay_stage);
-        delete replay_stage;
-        replay_stage = nullptr;
-        replay_btn->setVisible(true);
-        return_btn->setVisible(false);
-        save_btn->setVisible(true);
-        load_btn->setVisible(true);
-
-        return true;
+        log() - Critical < "Failed to load save:" < err;
     }
+    return true;
+}
+
+bool delegates::exit_btn_handler()
+{
+    g_window->close();
+    return true;
+}
+
+void delegates::replay_finished_handler(ReplayStage *)
+{
+    setMenu(MenuMode::Replay);
+}
+
+bool delegates::replay_btn_handler()
+{
+    g_replay_stage = new ReplayStage(":/trackings/track1.dat");
+    Object *object = new Object("player");
+    MeshComponent *component = new MeshComponent("mesh", ":/models/bot/bot4.obj");
+    object->addComponent(component);
+    g_replay_stage->setObject(object);
+    g_replay_stage->setInputDelegate(delegates::replayInputDelegate);
+    g_replay_stage->setFinishedDelegate(delegates::replay_finished_handler);
+    g_replay_stage->setFreeze(true);
+
+    Ground *ground = new Ground(Rect(-((float)BASE_LEVEL_SIZE / 2) * (float)g_level,
+                                     -((float)BASE_LEVEL_SIZE / 2) * (float)g_level,
+                                     BASE_LEVEL_SIZE * (float)g_level, BASE_LEVEL_SIZE * (float)g_level),
+                                ":/models/ground/color.jpg");
+    Camera *camera = new Camera();
+    g_replay_stage->setGround(ground);
+    g_replay_stage->setCamera(camera);
+    camera->setTargetObject(object);
+    camera->setPosition(Vec3(0.0f, 300.0f, -200.0f));
+
+    g_window->eraseStage(g_world_stage);
+    g_window->insertStage(g_replay_stage, 0);
+    setMenu(MenuMode::Replay);
+    return true;
+}
+
+bool delegates::return_btn_handler()
+{
+    g_window->insertStage(g_world_stage, 0);
+    g_window->eraseStage(g_replay_stage);
+    delete g_replay_stage;
+    g_replay_stage = nullptr;
+    setMenu(MenuMode::Play);
+
+    return true;
+}
+
+bool delegates::login_btn_handler()
+{
+    return true;
 }
 
 #ifdef __unix__
@@ -313,100 +287,317 @@ void run()
     try
     {
         SaveManager::setComponentLoader(&delegates::componentLoader);
-        window = new GameWindow("NGE", 1000, 700, 0);
-        world_stage = new WorldStage();
-        Object *object = new Object("player");
-        Camera *camera = new Camera();
-        camera->setTargetObject(object);
-        camera->setPosition(Vec3(0.0f, 300.0f, -200.0f));
-        MeshComponent *component = new MeshComponent("mesh", ":/models/bot/bot4.obj");
-        Ground *ground = new Ground(Rect(-1000, -1000, 2000, 2000), ":/models/ground/color.jpg");
-        object->addComponent(component);
-        InputComponent *input = new InputComponent("input");
-        object->addComponent(input);
-        world_stage->addObject(object);
-        world_stage->setTrackFilePath(":/trackings/track1.dat");
-        world_stage->setTrackObject("player");
-        for(int i = 0; i < enemies; i++)
-        {
-            Object *enemy = new Object("enemy" + std::to_string(i));
-            MeshComponent *enemy_comp = new MeshComponent("mesh", ":/models/bot/bot4.obj");
-            NPCComponent *enemy_npc = new NPCComponent("npc");
-            BarComponent *enemy_life = new BarComponent("life", 50, 50);
-            enemy->setPosition(Vec3(100 * (i + 2), 0, 100 * (1 + i)));
-            enemy->addComponent(enemy_comp);
-            enemy->addComponent(enemy_npc);
-            enemy->addComponent(enemy_life);
-            world_stage->addObject(enemy);
-        }
-        Object *arena = new Object("arena0");
-        MeshComponent *arena_comp = new MeshComponent("mesh", ":/models/arena/arena.fbx");
-        arena->addComponent(arena_comp);
-        BarComponent *arena_life_bar = new BarComponent("life", 100, 100);
-        arena->addComponent(arena_life_bar);
-        arena->setPosition(Vec3(600, 0, -600));
-        world_stage->addObject(arena);
-        world_stage->setCamera(camera);
-        world_stage->setCollisionDelegate(&delegates::collisionDelegate);
-        world_stage->setInputDelegate(&delegates::inputDelegate);
-        world_stage->setOffworldDelegate(&delegates::offworldDelegate);
-        world_stage->setGround(ground);
+        g_window = new GameWindow("NGE", 1000, 700, 0);
         GraphStage *graph = new GraphStage();
-        enemies_widget = new TextWidget("Enemies: " + std::to_string(enemies), ":/fonts/arial.ttf", 20, Vec4(1, 1, 1, 1));
-        arenas_widget = new TextWidget("Arenas: " + std::to_string(arenas), ":/fonts/arial.ttf", 20, Vec4(1, 1, 1, 1));
-        enemies_widget->setPos(Vec2(-130, -40));
-        arenas_widget->setPos(Vec2(-130, -80));
-        enemies_widget->setLayoutOrigin(LayoutOrigin::Top | LayoutOrigin::Right);
-        arenas_widget->setLayoutOrigin(LayoutOrigin::Top | LayoutOrigin::Right);
-        arenas_widget->setZPos(-0.7);
-        enemies_widget->setZPos(-0.7);
-        graph->addWidget(enemies_widget);
-        graph->addWidget(arenas_widget);
-        background = new RectWidget(Rect(0, 0, 100, 100), Vec4(0, 0, 0, 0.5));
-        background->setLayoutOrigin(LayoutOrigin::Bottom | LayoutOrigin::Left);
-        background->setLayoutFlags(LayoutFlags::SizeRelative);
-        background->setZPos(-0.3);
-        background->setVisible(false);
-        graph->addWidget(background);
+        g_level_widget = new TextWidget("Level " + std::to_string(g_level), ":/fonts/arial.ttf", 20, Vec4(1, 1, 1, 1));
+        g_enemies_widget = new TextWidget("Enemies: " + std::to_string(g_enemies), ":/fonts/arial.ttf", 20, Vec4(1, 1, 1, 1));
+        g_arenas_widget = new TextWidget("Arenas: " + std::to_string(g_arenas), ":/fonts/arial.ttf", 20, Vec4(1, 1, 1, 1));
+        g_level_widget->setPos(Vec2(-130, -40));
+        g_enemies_widget->setPos(Vec2(-130, -80));
+        g_arenas_widget->setPos(Vec2(-130, -120));
+        g_level_widget->setLayoutOrigin(LayoutOrigin::Top | LayoutOrigin::Right);
+        g_enemies_widget->setLayoutOrigin(LayoutOrigin::Top | LayoutOrigin::Right);
+        g_arenas_widget->setLayoutOrigin(LayoutOrigin::Top | LayoutOrigin::Right);
+        g_level_widget->setZPos(-0.7);
+        g_arenas_widget->setZPos(-0.7);
+        g_enemies_widget->setZPos(-0.7);
+        graph->addWidget(g_level_widget);
+        graph->addWidget(g_enemies_widget);
+        graph->addWidget(g_arenas_widget);
+        g_background = new RectWidget(Rect(0, 0, 100, 100), Vec4(0, 0, 0, 0.5));
+        g_background->setLayoutOrigin(LayoutOrigin::Bottom | LayoutOrigin::Left);
+        g_background->setLayoutFlags(LayoutFlags::SizeRelative);
+        g_background->setZPos(-0.3);
+        graph->addWidget(g_background);
 
-        replay_btn = new ButtonWidget("Replay", Rect(-150, 95, 300, 50), &delegates::replay_btn_handler,
+        g_lost_label = new TextWidget("Lost!", ":/fonts/arial.ttf", 75);
+        g_lost_label->setZPos(-0.2);
+        g_lost_label->setLayoutOrigin(LayoutOrigin::Center);
+        g_lost_label->setPos(Vec2(-130, 35));
+
+        g_login_entry = new TextWidget("Login: ", ":/fonts/arial.ttf", 40);
+        g_login_entry->setZPos(-0.2);
+        g_login_entry->setLayoutOrigin(LayoutOrigin::Center);
+        g_login_entry->setPos(Vec2(-130, 35));
+
+        g_replay_btn = new ButtonWidget("Replay", Rect(0, 0, 300, 50), &delegates::replay_btn_handler,
+                                        Vec4(1, 1, 1, 1), Vec4(0, 0, 0, 1), 40);
+        g_replay_btn->setZPos(-0.5);
+
+        g_return_btn = new ButtonWidget("Return", Rect(0, 0, 300, 50), &delegates::return_btn_handler,
+                                        Vec4(1, 1, 1, 1), Vec4(0, 0, 0, 1), 40);
+        g_return_btn->setZPos(-0.5);
+
+        g_save_btn = new ButtonWidget("Save", Rect(0, 0, 300, 50), &delegates::save_btn_handler,
                                       Vec4(1, 1, 1, 1), Vec4(0, 0, 0, 1), 40);
-        replay_btn->setZPos(-0.5);
-        replay_btn->setVisible(false);
+        g_save_btn->setZPos(-0.5);
 
-        return_btn = new ButtonWidget("Return", Rect(-150, -25, 300, 50), &delegates::return_btn_handler,
+        g_load_btn = new ButtonWidget("Load", Rect(0, 0, 300, 50), &delegates::load_btn_handler,
                                       Vec4(1, 1, 1, 1), Vec4(0, 0, 0, 1), 40);
-        return_btn->setZPos(-0.5);
-        return_btn->setVisible(false);
+        g_load_btn->setZPos(-0.5);
 
-        save_btn = new ButtonWidget("Save", Rect(-150, 35, 300, 50), &delegates::save_btn_handler,
-                                                  Vec4(1, 1, 1, 1), Vec4(0, 0, 0, 1), 40);
-        save_btn->setZPos(-0.5);
-        save_btn->setVisible(false);
+        g_login_btn = new ButtonWidget("Login", Rect(0, 0, 300, 50), &delegates::login_btn_handler,
+                                       Vec4(1, 1, 1, 1), Vec4(0, 0, 0, 1), 40);
+        g_login_btn->setZPos(-0.5);
 
-        load_btn = new ButtonWidget("Load", Rect(-150, -25, 300, 50), &delegates::load_btn_handler,
-                                    Vec4(1, 1, 1, 1), Vec4(0, 0, 0, 1), 40);
-        load_btn->setZPos(-0.5);
-        load_btn->setVisible(false);
-
-        exit_btn = new ButtonWidget("Exit", Rect(-150, -85, 300, 50), &delegates::exit_btn_handler,
-                                                  Vec4(1, 1, 1, 1), Vec4(0, 0, 0, 1), 40);
-        exit_btn->setZPos(-0.5);
-        exit_btn->setVisible(false);
-        graph->addWidget(replay_btn);
-        graph->addWidget(save_btn);
-        graph->addWidget(load_btn);
-        graph->addWidget(return_btn);
-        graph->addWidget(exit_btn);
-        window->setCursorVisibility(false);
-        window->pushStage(world_stage);
-        window->pushStage(graph);
-        window->exec();
-        delete window;
+        g_exit_btn = new ButtonWidget("Exit", Rect(0, 0, 300, 50), &delegates::exit_btn_handler,
+                                      Vec4(1, 1, 1, 1), Vec4(0, 0, 0, 1), 40);
+        g_exit_btn->setZPos(-0.5);
+        graph->addWidget(g_replay_btn);
+        graph->addWidget(g_save_btn);
+        graph->addWidget(g_load_btn);
+        graph->addWidget(g_return_btn);
+        graph->addWidget(g_exit_btn);
+        graph->addWidget(g_lost_label);
+        graph->addWidget(g_login_btn);
+        graph->addWidget(g_login_entry);
+        g_window->setCursorVisibility(false);
+        setLevel(1);
+        graph->setFallbackEventHandler(&delegates::graphInputDelegate);
+        g_window->pushStage(graph);
+        setMenu(MenuMode::Login);
+        g_window->exec();
+        delete g_window;
         Game::shutdown();
     }
     catch (const char *e)
     {
         log() - Fatal < e <<= trace;
     }
+}
+
+
+GComplex createComplex(Vec2 pos, unsigned int id, unsigned int difficulty)
+{
+    GComplex complex;
+
+    Object *arena = new Object("arena" + std::to_string(id));
+    MeshComponent *arena_comp = new MeshComponent("mesh", ":/models/arena/arena.fbx");
+    arena->addComponent(arena_comp);
+    BarComponent *arena_life_bar = new BarComponent("life", difficulty * 100, difficulty * 100);
+    arena->addComponent(arena_life_bar);
+    arena->setPosition(Vec3(pos.x, 0, pos.y));
+    complex.Objects.push_back(arena);
+
+    float a = (float)360 / (float)difficulty;
+    for(unsigned int i = 0; i < difficulty; i++)
+    {
+        Object *enemy = new Object("enemy" + std::to_string(id) + std::to_string(i));
+        MeshComponent *enemy_comp = new MeshComponent("mesh", ":/models/bot/bot4.obj");
+        NPCComponent *enemy_npc = new NPCComponent("npc");
+        BarComponent *enemy_life = new BarComponent("life", difficulty * 30, difficulty * 30);
+        float x = (COMPLEX_RADIUS - 50) * glm::acos(glm::radians(a * (float)i));
+        float y = (COMPLEX_RADIUS - 50) * glm::asin(glm::radians(a * (float)i));
+        enemy->setPosition(Vec3(pos.x + x, 0, pos.y + y));
+        enemy->addComponent(enemy_comp);
+        enemy->addComponent(enemy_npc);
+        enemy->addComponent(enemy_life);
+        complex.Objects.push_back(enemy);
+    }
+
+    complex.Arenas = 1;
+    complex.Enemies = difficulty;
+
+    return complex;
+}
+
+int generateRand(int low, int high)
+{
+    std::random_device dev;
+    static std::mt19937 rng(dev());
+    std::uniform_int_distribution<std::mt19937::result_type> dist(low, high);
+    return (int)dist(rng);
+}
+
+void setLevel(unsigned int level)
+{
+    WorldStage *stage = new WorldStage();
+    stage->setCollisionDelegate(&delegates::collisionDelegate);
+    stage->setInputDelegate(&delegates::inputDelegate);
+    stage->setOffworldDelegate(&delegates::offworldDelegate);
+
+    Ground *ground = new Ground(Rect(-((float)BASE_LEVEL_SIZE / 2) * (float)level,
+                                     -((float)BASE_LEVEL_SIZE / 2) * (float)level,
+                                     BASE_LEVEL_SIZE * (float)level, BASE_LEVEL_SIZE * (float)level),
+                                ":/models/ground/color.jpg");
+    stage->setGround(ground);
+
+    unsigned int enemies = 0;
+    unsigned int arenas = 0;
+
+    std::vector<Rect> areas;
+    areas.reserve(level);
+    //generate complexes
+    for(unsigned int i = 0; i < level; i++)
+    {
+        while(true)
+        {
+            Vec2 pos = Vec2(
+                    generateRand(COMPLEX_RADIUS - (BASE_LEVEL_SIZE / 2) * (int)level, (BASE_LEVEL_SIZE / 2) * (int)level - COMPLEX_RADIUS),
+                    generateRand(COMPLEX_RADIUS - (BASE_LEVEL_SIZE / 2) * (int)level, (BASE_LEVEL_SIZE / 2) * (int)level - COMPLEX_RADIUS));
+            Rect bounds(pos.x - COMPLEX_RADIUS, pos.y - COMPLEX_RADIUS, COMPLEX_RADIUS, COMPLEX_RADIUS);
+            bool collides = false;
+            for (auto &area: areas)
+            {
+                if (interface::checkCollision(area.x(), area.x() + area.width(), bounds.x(),
+                                              bounds.x() + bounds.width())
+                    && interface::checkCollision(area.y(), area.y() + area.height(), bounds.y(),
+                                                 bounds.y() + bounds.height()))
+                {
+                    collides = true;
+                    break;
+                }
+            }
+
+            if(collides) continue;
+
+            areas.push_back(bounds);
+            GComplex complex = createComplex(pos, i, level);
+            arenas += complex.Arenas;
+            enemies += complex.Enemies;
+            for (auto &obj : complex.Objects)
+            {
+                stage->addObject(obj);
+            }
+            break;
+        }
+    }
+
+    Vec2 player_pos;
+    while(true)
+    {
+        player_pos = Vec2(generateRand(50 - ((BASE_LEVEL_SIZE / 2) * (int)level), ((BASE_LEVEL_SIZE / 2) * (int)level) - 50),
+                          generateRand(50 - ((BASE_LEVEL_SIZE / 2) * (int)level), ((BASE_LEVEL_SIZE / 2) * (int)level) - 50));
+
+        bool collides = false;
+        for (auto &area : areas)
+        {
+            if(area.x() <= player_pos.x && area.x() + area.width() >= player_pos.x
+               && area.y() <= player_pos.y && area.y() + area.height() >= player_pos.y)
+            {
+                collides = true;
+                break;
+            }
+        }
+
+        if(!collides) break;
+    }
+
+    Object *player = new Object("player");
+    Camera *camera = new Camera();
+    camera->setTargetObject(player);
+    camera->setPosition(Vec3(0.0f, 300.0f, -200.0f));
+    MeshComponent *player_mesh = new MeshComponent("mesh", ":/models/bot/bot4.obj");
+    player->addComponent(player_mesh);
+    InputComponent *player_input = new InputComponent("player_input");
+    player->addComponent(player_input);
+    player->setPosition(Vec3(player_pos.x, 0, player_pos.y));
+    stage->addObject(player);
+    stage->setTrackFilePath(":/trackings/track1.dat");
+    stage->setTrackObject("player");
+    stage->setCamera(camera);
+    stage->setFreeze(true);
+
+    if(g_world_stage != nullptr)
+    {
+        g_window->eraseStage(g_world_stage);
+        delete g_world_stage;
+    }
+    g_world_stage = stage;
+    g_window->insertStage(g_world_stage, 0);
+
+    g_level = level;
+    g_enemies = enemies;
+    g_arenas = arenas;
+    g_level_widget->setText("Level " + std::to_string(g_level));
+    g_enemies_widget->setText("Enemies: " + std::to_string(g_enemies));
+    g_arenas_widget->setText("Arenas: " + std::to_string(g_arenas));
+}
+
+void setMenu(MenuMode mode)
+{
+    switch (mode)
+    {
+        case Hidden:
+            g_window->setCursorVisibility(false);
+            g_background->setVisible(false);
+            g_replay_btn->setVisible(false);
+            g_save_btn->setVisible(false);
+            g_load_btn->setVisible(false);
+            g_exit_btn->setVisible(false);
+            g_return_btn->setVisible(false);
+            g_login_btn->setVisible(false);
+            g_lost_label->setVisible(false);
+            g_login_entry->setVisible(false);
+            break;
+        case Login:
+            g_window->setCursorVisibility(true);
+            g_login_entry->setPos(Vec2(-150, 40));
+            g_login_btn->setPos(Vec2(-150, -25));
+            g_exit_btn->setPos(Vec2(-150, -80));
+
+            g_background->setVisible(true);
+            g_replay_btn->setVisible(false);
+            g_save_btn->setVisible(false);
+            g_load_btn->setVisible(false);
+            g_exit_btn->setVisible(true);
+            g_return_btn->setVisible(false);
+            g_login_btn->setVisible(true);
+            g_lost_label->setVisible(false);
+            g_login_entry->setVisible(true);
+            break;
+        case Play:
+            g_window->setCursorVisibility(true);
+//            g_scoreboard_btn->setPos(Vec2(-130, 90)); //TODO: scoreboard
+            g_replay_btn->setPos(Vec2(-150, 35));
+            g_save_btn->setPos(Vec2(-150, -20));
+            g_load_btn->setPos(Vec2(-150, -75));
+            g_exit_btn->setPos(Vec2(-150, -130));
+
+            g_background->setVisible(true);
+            g_replay_btn->setVisible(true);
+            g_save_btn->setVisible(true);
+            g_load_btn->setVisible(true);
+            g_exit_btn->setVisible(true);
+            g_return_btn->setVisible(false);
+            g_login_btn->setVisible(false);
+            g_lost_label->setVisible(false);
+            g_login_entry->setVisible(false);
+            break;
+        case Replay:
+            g_window->setCursorVisibility(true);
+            g_replay_btn->setPos(Vec2(-150, 30));
+            g_return_btn->setPos(Vec2(-150, -25));
+            g_exit_btn->setPos(Vec2(-150, -80));
+
+            g_background->setVisible(true);
+            g_replay_btn->setVisible(true);
+            g_save_btn->setVisible(false);
+            g_load_btn->setVisible(false);
+            g_exit_btn->setVisible(true);
+            g_return_btn->setVisible(true);
+            g_login_btn->setVisible(false);
+            g_lost_label->setVisible(false);
+            g_login_entry->setVisible(false);
+            break;
+        case Lost:
+            g_window->setCursorVisibility(true);
+            g_lost_label->setPos(Vec2(-150, 72));
+            //TODO: scoreboard (-150, 17)
+            g_replay_btn->setPos(Vec2(-150, -42));
+            g_load_btn->setPos(Vec2(-150, -97));
+            g_exit_btn->setPos(Vec2(-150, -152));
+
+            g_background->setVisible(true);
+            g_replay_btn->setVisible(true);
+            g_save_btn->setVisible(false);
+            g_load_btn->setVisible(true);
+            g_exit_btn->setVisible(true);
+            g_return_btn->setVisible(false);
+            g_login_btn->setVisible(false);
+            g_lost_label->setVisible(true);
+            g_login_entry->setVisible(false);
+            break;
+    }
+    g_menu_mode = mode;
 }

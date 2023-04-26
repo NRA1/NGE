@@ -14,7 +14,7 @@
 class Widget
 {
 public:
-    Widget();
+    Widget(Widget *parent = nullptr);
 
     const Vec2 &pos() const;
     void setPos(const Vec2 &pos);
@@ -28,6 +28,9 @@ public:
     void setLayoutFlags(unsigned int layout_flags);
     unsigned int layoutOrigin() const;
     void setLayoutOrigin(unsigned int layout_origin);
+
+    const std::vector<Widget *> &children() const;
+    Widget *parent() const;
 
     virtual Rect boundingRect() const = 0;
 
@@ -45,7 +48,8 @@ public:
 
     virtual unsigned int requiredShaderPrograms() const;
 
-    virtual ~Widget() = default;
+    virtual ~Widget();
+
 private:
     Vec2 pos_;
     float z_pos_;
@@ -54,6 +58,9 @@ private:
 
     unsigned int layout_flags_;
     unsigned int layout_origin_;
+
+    std::vector<Widget*> children_;
+    Widget* parent_;
 };
 
 

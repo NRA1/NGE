@@ -8,7 +8,7 @@
 class RectWidget : public Widget
 {
 public:
-    RectWidget(Rect rect, Vec4 color);
+    RectWidget(Rect rect, Vec4 color, Widget *parent = nullptr);
 
     void load() override;
     void render(std::map<unsigned int, ShaderProgram *> &shader_program) const override;

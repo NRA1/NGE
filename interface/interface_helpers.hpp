@@ -5,6 +5,8 @@
 #include "../data_objects/positioned_box.hpp"
 #include "../data_objects/rotation.hpp"
 #include "../infrastructure/logger.hpp"
+#include "../graph/widget.hpp"
+#include "../data_objects/size.hpp"
 #include <glm/trigonometric.hpp>
 
 #undef interface

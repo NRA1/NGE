@@ -1,4 +1,6 @@
 #include "interface_helpers.hpp"
+#include "../enums/layout_origin.hpp"
+#include "../enums/layout_flags.hpp"
 
 PositionedBox interface::axisAlignedBoundingBox(const Vec3 &pos, const Rotation &rot, const PositionedBox &bounds)
 {

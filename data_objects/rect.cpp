@@ -48,3 +48,11 @@ void Rect::setHeight(float height)
     height_ = height;
 }
 
+Rect Rect::operator*(Mat4 mat) const
+{
+    Vec4 bl = mat * Vec4(x_, y_, 0, 1);
+    Vec4 tr = mat * Vec4(x_ + width_, y_ + height_, 0, 1);
+
+    return Rect(bl.x, bl.y, tr.x - bl.x, tr.y - bl.y);
+}
+
