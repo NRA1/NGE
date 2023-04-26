@@ -35,8 +35,8 @@ public:
     MotionVector &motionVector();
     PositionedBox boundingBox() const;
     const std::string &name() const;
-    int userTypes() const;
-    void setUserTypes(int types);
+    int userType() const;
+    void setUserType(int type);
     AbstractComponent *findComponent(const std::string &name);
 
     virtual void load();
@@ -61,7 +61,7 @@ private:
     std::vector<AbstractNPCComponent*> npc_components_;
 
     unsigned int features_;
-    int user_types_;
+    int user_type_;
     std::string name_;
 
     Vec3 position_;

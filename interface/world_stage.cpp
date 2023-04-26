@@ -243,10 +243,11 @@ WorldStage::~WorldStage()
     collider_display_->unload();
     delete collider_display_;
 #endif
-    for (Object *object : objects_)
+    for (Object *&object : objects_)
     {
         delete object;
     }
+    objects_.clear();
     delete camera_;
     delete ground_;
     delete shader_program_;
@@ -300,4 +301,15 @@ void WorldStage::setTrackFilePath(std::optional<std::string> path)
 bool WorldStage::freeze() const
 {
     return freeze_;
+}
+
+std::vector<Object *> WorldStage::findObjectsByUserType(int type) const
+{
+    std::vector<Object*> objects;
+    for (auto &object : objects_)
+    {
+        if(object->userType() == type)
+            objects.push_back(object);
+    }
+    return objects;
 }

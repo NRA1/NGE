@@ -3,7 +3,7 @@
 #include <utility>
 #include "mesh_component.hpp"
 
-Object::Object(std::string name) : features_(0), user_types_(0), name_(std::move(name)),
+Object::Object(std::string name) : features_(0), user_type_(0), name_(std::move(name)),
                                    position_(Vec3(0, 0, 0)), rotation_(0, 0, 0), motion_vector_()
 {
 
@@ -125,14 +125,14 @@ Object::~Object()
     }
 }
 
-int Object::userTypes() const
+int Object::userType() const
 {
-    return user_types_;
+    return user_type_;
 }
 
-void Object::setUserTypes(int types)
+void Object::setUserType(int type)
 {
-    user_types_ = types;
+    user_type_ = type;
 }
 
 const std::string &Object::name() const

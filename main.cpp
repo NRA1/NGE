@@ -1,4 +1,5 @@
 #include "main.hpp"
+#include "game/user_object_type.hpp"
 
 bool delegates::collisionDelegate(WorldStage *stage, Object *object, Object *collider)
 {
@@ -17,17 +18,25 @@ bool delegates::collisionDelegate(WorldStage *stage, Object *object, Object *col
                     if (collider->name().starts_with("arena"))
                     {
                         g_arenas--;
+                        g_points += 3;
                         g_arenas_widget->setText("Arenas: " + std::to_string(g_arenas));
+                        g_points_widget->setText("Points: " + std::to_string(g_points));
                     }
                     else if (collider->name().starts_with("enemy"))
                     {
                         g_enemies--;
+                        g_points++;
                         g_enemies_widget->setText("Enemies: " + std::to_string(g_enemies));
+                        g_points_widget->setText("Points: " + std::to_string(g_points));
                     }
                     stage->removeObject(collider);
 
                     if(g_enemies == 0 && g_arenas == 0)
                     {
+                        g_points += 5;
+                        g_points_widget->setText("Points: " + std::to_string(g_points));
+                        g_world_stage->setFreeze(true);
+                        setMenu(MenuMode::Play);
                         setLevel(g_level + 1);
                         return true;
                     }
@@ -88,6 +97,7 @@ bool delegates::inputDelegate(WorldStage *stage, Event *event)
         mat = glm::rotate(mat, glm::radians(360 - player->rotation().roll()), Vec3(0, 1, 0));
         Vec4 rel_start_pos = Vec4(0, 50, 50, 0) * mat;
         Object *bullet = new Object("bullet" + std::to_string(bullet_counter++));
+        bullet->setUserType(UserObjectType::BulletType);
         bullet->setPosition(Vec3(player->position().x + rel_start_pos.x, player->position().y + rel_start_pos.y,
                                  player->position().z + rel_start_pos.z));
         MeshComponent *mesh_comp = new MeshComponent("mesh", ":/models/bullet/bullet.obj");
@@ -104,7 +114,39 @@ bool delegates::inputDelegate(WorldStage *stage, Event *event)
 
 bool delegates::offworldDelegate(WorldStage *stage, Object *obj)
 {
+    if (obj->name().starts_with("arena"))
+    {
+        g_arenas--;
+        g_points += 3;
+        g_arenas_widget->setText("Arenas: " + std::to_string(g_arenas));
+        g_points_widget->setText("Points: " + std::to_string(g_points));
+    }
+    else if (obj->name().starts_with("enemy"))
+    {
+        g_enemies--;
+        g_points++;
+        g_enemies_widget->setText("Enemies: " + std::to_string(g_enemies));
+        g_points_widget->setText("Points: " + std::to_string(g_points));
+    }
+
+    if(obj->name() == "player")
+    {
+        stage->setFreeze(true);
+        setMenu(MenuMode::Lost);
+    }
+
     stage->removeObject(obj);
+
+    if(g_enemies == 0 && g_arenas == 0)
+    {
+        g_points += 5;
+        g_points_widget->setText("Points: " + std::to_string(g_points));
+        g_world_stage->setFreeze(true);
+        setMenu(MenuMode::Play);
+        setLevel(g_level + 1);
+        return true;
+    }
+
     return true;
 }
 
@@ -153,6 +195,7 @@ bool delegates::graphInputDelegate(GraphStage *, Event *event)
                 g_username = g_username + c;
             }
             g_login_entry->setText("Login: " + g_username);
+            g_login_btn->setVisible(!g_username.empty());
         }
     }
     return true;
@@ -171,37 +214,14 @@ AbstractComponent *delegates::componentLoader(unsigned int type, std::ifstream &
 
 bool delegates::save_btn_handler()
 {
-    try
-    {
-        SaveManager::dump(g_world_stage, ":/save/save1.dat");
-    }
-    catch (char *err)
-    {
-        log() - Critical < "Failed to save:" < err;
-    }
+    dump();
     return true;
 }
 
 bool delegates::load_btn_handler()
 {
-    try
-    {
-        WorldStage *world_stage_t = SaveManager::load(":/save/save1.dat");
-        world_stage_t->setCollisionDelegate(&delegates::collisionDelegate);
-        world_stage_t->setInputDelegate(&delegates::inputDelegate);
-        world_stage_t->setOffworldDelegate(&delegates::offworldDelegate);
-        Object *player = world_stage_t->findObjectByName("player");
-        world_stage_t->camera()->setTargetObject(player);
-        world_stage_t->setFreeze(true);
-        g_window->eraseStage(g_world_stage);
-        delete g_world_stage;
-        g_world_stage = world_stage_t;
-        g_window->insertStage(g_world_stage, 0);
-    }
-    catch (const char *err)
-    {
-        log() - Critical < "Failed to load save:" < err;
-    }
+    setMenu(MenuMode::Play);
+    load();
     return true;
 }
 
@@ -220,6 +240,7 @@ bool delegates::replay_btn_handler()
 {
     g_replay_stage = new ReplayStage(":/trackings/track1.dat");
     Object *object = new Object("player");
+    object->setUserType(UserObjectType::PlayerType);
     MeshComponent *component = new MeshComponent("mesh", ":/models/bot/bot4.obj");
     object->addComponent(component);
     g_replay_stage->setObject(object);
@@ -235,7 +256,7 @@ bool delegates::replay_btn_handler()
     g_replay_stage->setGround(ground);
     g_replay_stage->setCamera(camera);
     camera->setTargetObject(object);
-    camera->setPosition(Vec3(0.0f, 300.0f, -200.0f));
+    camera->setPosition(Vec3(50.0f, 100.0f, -200.0f));
 
     g_window->eraseStage(g_world_stage);
     g_window->insertStage(g_replay_stage, 0);
@@ -246,8 +267,7 @@ bool delegates::replay_btn_handler()
 bool delegates::return_btn_handler()
 {
     g_window->insertStage(g_world_stage, 0);
-    g_window->eraseStage(g_replay_stage);
-    delete g_replay_stage;
+    g_window->disposeStage(g_replay_stage);
     g_replay_stage = nullptr;
     setMenu(MenuMode::Play);
 
@@ -256,6 +276,9 @@ bool delegates::return_btn_handler()
 
 bool delegates::login_btn_handler()
 {
+    if(g_username.empty()) return true;
+    g_username_widget->setText(g_username);
+    setMenu(MenuMode::Play);
     return true;
 }
 
@@ -289,19 +312,29 @@ void run()
         SaveManager::setComponentLoader(&delegates::componentLoader);
         g_window = new GameWindow("NGE", 1000, 700, 0);
         GraphStage *graph = new GraphStage();
+        g_username_widget = new TextWidget("", ":/fonts/arial.ttf", 20, Vec4(1, 1, 1, 1));
         g_level_widget = new TextWidget("Level " + std::to_string(g_level), ":/fonts/arial.ttf", 20, Vec4(1, 1, 1, 1));
+        g_points_widget = new TextWidget("Points: " + std::to_string(g_points), ":/fonts/arial.ttf", 20, Vec4(1, 1, 1, 1));
         g_enemies_widget = new TextWidget("Enemies: " + std::to_string(g_enemies), ":/fonts/arial.ttf", 20, Vec4(1, 1, 1, 1));
         g_arenas_widget = new TextWidget("Arenas: " + std::to_string(g_arenas), ":/fonts/arial.ttf", 20, Vec4(1, 1, 1, 1));
-        g_level_widget->setPos(Vec2(-130, -40));
-        g_enemies_widget->setPos(Vec2(-130, -80));
-        g_arenas_widget->setPos(Vec2(-130, -120));
+        g_username_widget->setPos(Vec2(-130, -40));
+        g_level_widget->setPos(Vec2(-130, -80));
+        g_points_widget->setPos(Vec2(-130, -120));
+        g_enemies_widget->setPos(Vec2(-130, -160));
+        g_arenas_widget->setPos(Vec2(-130, -200));
+        g_username_widget->setLayoutOrigin(LayoutOrigin::Top | LayoutOrigin::Right);
         g_level_widget->setLayoutOrigin(LayoutOrigin::Top | LayoutOrigin::Right);
+        g_points_widget->setLayoutOrigin(LayoutOrigin::Top | LayoutOrigin::Right);
         g_enemies_widget->setLayoutOrigin(LayoutOrigin::Top | LayoutOrigin::Right);
         g_arenas_widget->setLayoutOrigin(LayoutOrigin::Top | LayoutOrigin::Right);
+        g_username_widget->setZPos(-0.7);
         g_level_widget->setZPos(-0.7);
+        g_points_widget->setZPos(-0.7);
         g_arenas_widget->setZPos(-0.7);
         g_enemies_widget->setZPos(-0.7);
+        graph->addWidget(g_username_widget);
         graph->addWidget(g_level_widget);
+        graph->addWidget(g_points_widget);
         graph->addWidget(g_enemies_widget);
         graph->addWidget(g_arenas_widget);
         g_background = new RectWidget(Rect(0, 0, 100, 100), Vec4(0, 0, 0, 0.5));
@@ -356,6 +389,9 @@ void run()
         graph->setFallbackEventHandler(&delegates::graphInputDelegate);
         g_window->pushStage(graph);
         setMenu(MenuMode::Login);
+
+        dump();
+
         g_window->exec();
         delete g_window;
         Game::shutdown();
@@ -372,6 +408,7 @@ GComplex createComplex(Vec2 pos, unsigned int id, unsigned int difficulty)
     GComplex complex;
 
     Object *arena = new Object("arena" + std::to_string(id));
+    arena->setUserType(UserObjectType::ArenaType);
     MeshComponent *arena_comp = new MeshComponent("mesh", ":/models/arena/arena.fbx");
     arena->addComponent(arena_comp);
     BarComponent *arena_life_bar = new BarComponent("life", difficulty * 100, difficulty * 100);
@@ -383,6 +420,7 @@ GComplex createComplex(Vec2 pos, unsigned int id, unsigned int difficulty)
     for(unsigned int i = 0; i < difficulty; i++)
     {
         Object *enemy = new Object("enemy" + std::to_string(id) + std::to_string(i));
+        enemy->setUserType(UserObjectType::EnemyType);
         MeshComponent *enemy_comp = new MeshComponent("mesh", ":/models/bot/bot4.obj");
         NPCComponent *enemy_npc = new NPCComponent("npc");
         BarComponent *enemy_life = new BarComponent("life", difficulty * 30, difficulty * 30);
@@ -411,6 +449,11 @@ int generateRand(int low, int high)
 
 void setLevel(unsigned int level)
 {
+    if(g_world_stage != nullptr)
+    {
+        g_window->disposeStage(g_world_stage);
+    }
+
     WorldStage *stage = new WorldStage();
     stage->setCollisionDelegate(&delegates::collisionDelegate);
     stage->setInputDelegate(&delegates::inputDelegate);
@@ -425,7 +468,7 @@ void setLevel(unsigned int level)
     unsigned int enemies = 0;
     unsigned int arenas = 0;
 
-    std::vector<Rect> areas;
+    std::vector<Vec2> areas;
     areas.reserve(level);
     //generate complexes
     for(unsigned int i = 0; i < level; i++)
@@ -435,14 +478,13 @@ void setLevel(unsigned int level)
             Vec2 pos = Vec2(
                     generateRand(COMPLEX_RADIUS - (BASE_LEVEL_SIZE / 2) * (int)level, (BASE_LEVEL_SIZE / 2) * (int)level - COMPLEX_RADIUS),
                     generateRand(COMPLEX_RADIUS - (BASE_LEVEL_SIZE / 2) * (int)level, (BASE_LEVEL_SIZE / 2) * (int)level - COMPLEX_RADIUS));
-            Rect bounds(pos.x - COMPLEX_RADIUS, pos.y - COMPLEX_RADIUS, COMPLEX_RADIUS, COMPLEX_RADIUS);
             bool collides = false;
             for (auto &area: areas)
             {
-                if (interface::checkCollision(area.x(), area.x() + area.width(), bounds.x(),
-                                              bounds.x() + bounds.width())
-                    && interface::checkCollision(area.y(), area.y() + area.height(), bounds.y(),
-                                                 bounds.y() + bounds.height()))
+                if (interface::checkCollision(area.x - ((float)COMPLEX_RADIUS / 2), area.x + ((float)COMPLEX_RADIUS / 2),
+                                              pos.x - ((float)COMPLEX_RADIUS / 2), pos.x + ((float)COMPLEX_RADIUS / 2))
+                    && interface::checkCollision(area.y - ((float)COMPLEX_RADIUS / 2), area.y + ((float)COMPLEX_RADIUS / 2),
+                                                 pos.y - ((float)COMPLEX_RADIUS / 2), pos.y + ((float)COMPLEX_RADIUS / 2)))
                 {
                     collides = true;
                     break;
@@ -451,7 +493,7 @@ void setLevel(unsigned int level)
 
             if(collides) continue;
 
-            areas.push_back(bounds);
+            areas.push_back(pos);
             GComplex complex = createComplex(pos, i, level);
             arenas += complex.Arenas;
             enemies += complex.Enemies;
@@ -472,8 +514,10 @@ void setLevel(unsigned int level)
         bool collides = false;
         for (auto &area : areas)
         {
-            if(area.x() <= player_pos.x && area.x() + area.width() >= player_pos.x
-               && area.y() <= player_pos.y && area.y() + area.height() >= player_pos.y)
+            if(interface::checkCollision(area.x - ((float)COMPLEX_RADIUS / 2), area.x + ((float)COMPLEX_RADIUS / 2),
+                                         player_pos.x - 100, player_pos.x + 100)
+                && interface::checkCollision(area.y - ((float)COMPLEX_RADIUS / 2), area.y + ((float)COMPLEX_RADIUS / 2),
+                                          player_pos.y - 100, player_pos.y + 100))
             {
                 collides = true;
                 break;
@@ -484,9 +528,10 @@ void setLevel(unsigned int level)
     }
 
     Object *player = new Object("player");
+    player->setUserType(UserObjectType::PlayerType);
     Camera *camera = new Camera();
     camera->setTargetObject(player);
-    camera->setPosition(Vec3(0.0f, 300.0f, -200.0f));
+    camera->setPosition(Vec3(0.0f, 150.0f, -150.0f));
     MeshComponent *player_mesh = new MeshComponent("mesh", ":/models/bot/bot4.obj");
     player->addComponent(player_mesh);
     InputComponent *player_input = new InputComponent("player_input");
@@ -498,11 +543,6 @@ void setLevel(unsigned int level)
     stage->setCamera(camera);
     stage->setFreeze(true);
 
-    if(g_world_stage != nullptr)
-    {
-        g_window->eraseStage(g_world_stage);
-        delete g_world_stage;
-    }
     g_world_stage = stage;
     g_window->insertStage(g_world_stage, 0);
 
@@ -542,7 +582,7 @@ void setMenu(MenuMode mode)
             g_load_btn->setVisible(false);
             g_exit_btn->setVisible(true);
             g_return_btn->setVisible(false);
-            g_login_btn->setVisible(true);
+            g_login_btn->setVisible(!g_username.empty());
             g_lost_label->setVisible(false);
             g_login_entry->setVisible(true);
             break;
@@ -600,4 +640,48 @@ void setMenu(MenuMode mode)
             break;
     }
     g_menu_mode = mode;
+}
+
+void load()
+{
+    try
+    {
+        GSaveData data;
+        WorldStage *world_stage_t = SaveManager::load(":/save/save1.dat", &data, sizeof(GSaveData));
+        world_stage_t->setCollisionDelegate(&delegates::collisionDelegate);
+        world_stage_t->setInputDelegate(&delegates::inputDelegate);
+        world_stage_t->setOffworldDelegate(&delegates::offworldDelegate);
+        Object *player = world_stage_t->findObjectByName("player");
+        world_stage_t->camera()->setTargetObject(player);
+        world_stage_t->setFreeze(true);
+        g_window->disposeStage(g_world_stage);
+        g_world_stage = world_stage_t;
+        g_window->insertStage(g_world_stage, 0);
+        g_enemies = data.Enemies;
+        g_arenas = data.Arenas;
+        g_level = data.Level;
+        g_points = data.Points;
+
+        g_level_widget->setText("Level " + std::to_string(g_level));
+        g_enemies_widget->setText("Enemies: " + std::to_string(g_enemies));
+        g_arenas_widget->setText("Arenas: " + std::to_string(g_arenas));
+        g_points_widget->setText("Points: " + std::to_string(g_points));
+    }
+    catch (const char *err)
+    {
+        log() - Critical < "Failed to load save:" < err;
+    }
+}
+
+void dump()
+{
+    try
+    {
+        GSaveData data { g_enemies, g_arenas, g_level, g_points };
+        SaveManager::dump(g_world_stage, ":/save/save1.dat", &data, sizeof(GSaveData));
+    }
+    catch (char *err)
+    {
+        log() - Critical < "Failed to save:" < err;
+    }
 }

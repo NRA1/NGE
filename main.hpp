@@ -36,6 +36,14 @@ struct GComplex
     unsigned int Enemies;
 };
 
+struct GSaveData
+{
+    unsigned int Enemies;
+    unsigned int Arenas;
+    unsigned int Level;
+    unsigned int Points;
+};
+
 enum MenuMode
 {
     Hidden,
@@ -50,6 +58,8 @@ GComplex createComplex(Vec2 pos, unsigned int id, unsigned int difficulty);
 int generateRand(int low, int high);
 void setLevel(unsigned int level);
 void setMenu(MenuMode mode);
+void load();
+void dump();
 
 
 namespace delegates
@@ -74,6 +84,7 @@ namespace delegates
 unsigned int g_enemies = 0;
 unsigned int g_arenas = 0;
 unsigned int g_level = 0;
+unsigned int g_points = 0;
 
 std::string g_username;
 
@@ -81,7 +92,9 @@ GameWindow *g_window;
 WorldStage *g_world_stage = nullptr;
 ReplayStage *g_replay_stage = nullptr;
 
+TextWidget *g_username_widget;
 TextWidget *g_level_widget;
+TextWidget *g_points_widget;
 TextWidget *g_enemies_widget;
 TextWidget *g_arenas_widget;
 

@@ -137,6 +137,8 @@ void X11Window<T>::poolEvents()
             pressed_keys_.remove(event.xkey.keycode);
             KeySym sym = XLookupKeysym(&event.xkey, 0);
             Key key = native::nativeToKey(sym);
+            Modifier modifier = modifier::modifierFromKey(key);
+            if(modifier != NoModifier) pressed_modifiers_ &= ~modifier;
             int modifiers = pressed_modifiers_;
             dispatch_event = new KeyReleaseEvent(key, modifiers);
         }

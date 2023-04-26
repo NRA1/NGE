@@ -41,6 +41,7 @@ public:
     void setTrackFilePath(std::optional<std::string> path);
 
     Object *findObjectByName(const std::string &name) const;
+    std::vector<Object*> findObjectsByUserType(int type) const;
 
     ShaderProgram *shaderProgram();
 
@@ -65,7 +66,6 @@ private:
     Size viewport_;
 
     std::vector<Object *> objects_;
-
 
     Object *tracked_object_;
     std::optional<std::string> track_file_path_;

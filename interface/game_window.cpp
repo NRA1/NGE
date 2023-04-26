@@ -47,6 +47,8 @@ void GameWindow::exec()
             stage->render(time - last_render);
         last_render = time;
         native_->swapBuffers();
+
+        applyDifferedActions();
     }
     shown_ = false;
     for(auto &stage : stages_)
@@ -55,12 +57,7 @@ void GameWindow::exec()
 
 void GameWindow::pushStage(AbstractStage *stage)
 {
-    stages_.push_back(stage);
-    if(shown_)
-    {
-        stage->viewportSizeChanged(native_->size());
-        stage->onAppearing();
-    }
+    differ_queue_.push(StageAction { StageAction::Push, stage, 0 });
 }
 
 void GameWindow::viewportSizeChanged(Size size)
@@ -104,6 +101,46 @@ void GameWindow::close()
 
 void GameWindow::eraseStage(AbstractStage *stage)
 {
+    differ_queue_.push(StageAction { StageAction::Erase, stage, 0 });
+}
+
+void GameWindow::insertStage(AbstractStage *stage, unsigned int index)
+{
+    differ_queue_.push(StageAction { StageAction::Insert, stage, index });
+}
+
+void GameWindow::disposeStage(AbstractStage *stage)
+{
+    differ_queue_.push(StageAction { StageAction::Dispose, stage, 0 });
+}
+
+void GameWindow::applyDifferedActions()
+{
+    while (!differ_queue_.empty())
+    {
+        StageAction &action = differ_queue_.front();
+        switch (action.Action)
+        {
+            case StageAction::Dispose:
+                differedEraseStage(action.Stage);
+                delete action.Stage;
+                break;
+            case StageAction::Erase:
+                differedEraseStage(action.Stage);
+                break;
+            case StageAction::Insert:
+                differedInsertStage(action.Stage, action.Index);
+                break;
+            case StageAction::Push:
+                differedInsertStage(action.Stage, stages_.size());
+                break;
+        }
+        differ_queue_.pop();
+    }
+}
+
+void GameWindow::differedEraseStage(AbstractStage *stage)
+{
     if(shown_)
     {
         stage->onDisappearing();
@@ -111,12 +148,9 @@ void GameWindow::eraseStage(AbstractStage *stage)
     erase_if(stages_, [stage](AbstractStage *x) { return x == stage; });
 }
 
-void GameWindow::insertStage(AbstractStage *stage, unsigned int index)
+void GameWindow::differedInsertStage(AbstractStage *stage, unsigned int index)
 {
-    auto it = stages_.begin();
-    for(unsigned int i = 0; i < index; i++)
-        it++;
-    stages_.insert(it, stage);
+    stages_.insert(stages_.begin() + index, stage);
     if(shown_)
     {
         stage->viewportSizeChanged(native_->size());

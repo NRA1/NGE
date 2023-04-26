@@ -2,10 +2,15 @@
 
 AbstractComponent *(*SaveManager::component_factory_)(unsigned int, std::ifstream&) = nullptr;
 
-WorldStage *SaveManager::load(const std::string &path)
+WorldStage *SaveManager::load(const std::string &path, void *userdata, unsigned int userdata_size)
 {
     std::ifstream ifs(ResourceLoader::fullPath(path), std::ios::binary);
     if(!ifs.is_open()) throw "File not open";
+
+    if(userdata != nullptr)
+    {
+        ifs.read((char*)userdata, userdata_size);
+    }
 
     WorldStage *stage = new WorldStage();
     std::vector<Object*> objects = load_objects(ifs);
@@ -18,10 +23,16 @@ WorldStage *SaveManager::load(const std::string &path)
     return stage;
 }
 
-void SaveManager::dump(WorldStage *world_stage, const std::string &path)
+void SaveManager::dump(WorldStage *world_stage, const std::string &path, void *userdata, unsigned int userdata_size)
 {
     std::ofstream ofs(ResourceLoader::fullPath(path), std::ios::binary);
     if(!ofs.is_open()) throw "File not open";
+
+    if(userdata != nullptr)
+    {
+        ofs.write((char*)userdata, userdata_size);
+    }
+
     dump_objects(world_stage->objects_, ofs);
     dump_camera(*world_stage->camera_, ofs);
     dump_ground(*world_stage->ground_, ofs);
@@ -43,7 +54,7 @@ void SaveManager::dump_objects(std::vector<Object *> &objects, std::ofstream &of
 
         dump_components(obj->components_, ofs);
 
-        ofs.write((char*)&obj->user_types_, sizeof(obj->user_types_));
+        ofs.write((char*)&obj->user_type_, sizeof(obj->user_type_));
         ofs.write((char*)&obj->position_, sizeof(obj->position_));
         dump_rotation(obj->rotation_, ofs);
     }
@@ -121,7 +132,7 @@ std::vector<Object *> SaveManager::load_objects(std::ifstream &ifs)
         }
 
 
-        ifs.read((char*)&obj->user_types_, sizeof(obj->user_types_));
+        ifs.read((char*)&obj->user_type_, sizeof(obj->user_type_));
         ifs.read((char*)&obj->position_, sizeof(obj->position_));
         obj->rotation_ = load_rotation(ifs);
         obj->name_ = std::string(name);

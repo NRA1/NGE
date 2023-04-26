@@ -2,6 +2,7 @@
 #define NGE_WINDOW_HPP
 
 #include <string>
+#include <queue>
 #include <chrono>
 #include <utility>
 #include "../infrastructure/logger.hpp"
@@ -19,6 +20,7 @@ public:
     void pushStage(AbstractStage *stage);
     void insertStage(AbstractStage *stage, unsigned int index);
     void eraseStage(AbstractStage *stage);
+    void disposeStage(AbstractStage *stage);
     void setCursorVisibility(bool visible);
     bool isCursorVisible();
     void close();
@@ -26,14 +28,33 @@ public:
     ~GameWindow();
 
 private:
+    struct StageAction
+    {
+        enum
+        {
+            Dispose,
+            Insert,
+            Push,
+            Erase
+        } Action;
+
+        AbstractStage *Stage;
+        unsigned int Index;
+    };
+
     void viewportSizeChanged(Size size);
     void eventHandler(Event *event);
+    void applyDifferedActions();
+    void differedEraseStage(AbstractStage *stage);
+    void differedInsertStage(AbstractStage *stage, unsigned int index);
 
     AbstractNativeWindow<GameWindow> *native_;
 
     std::string title_;
     Size size_;
     std::vector<AbstractStage *> stages_;
+
+    std::queue<StageAction> differ_queue_;
 
     bool shown_;
 };

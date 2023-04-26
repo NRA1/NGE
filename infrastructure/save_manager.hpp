@@ -7,8 +7,8 @@
 class SaveManager
 {
 public:
-    static WorldStage *load(const std::string &path);
-    static void dump(WorldStage *world_stage, const std::string &path);
+    static WorldStage *load(const std::string &path, void *userdata = nullptr, unsigned int userdata_size = 0);
+    static void dump(WorldStage *world_stage, const std::string &path, void *userdata = nullptr, unsigned int userdata_size = 0);
 
     static void setComponentLoader(AbstractComponent *(*componentFactory)(unsigned int, std::ifstream&));
 

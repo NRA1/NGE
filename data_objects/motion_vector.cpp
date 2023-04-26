@@ -45,6 +45,7 @@ MotionVector::~MotionVector()
     {
         delete object;
     }
+    manipulation_objects_.clear();
 }
 
 std::optional<Rotation> MotionVector::grabbedRotation() const
@@ -54,7 +55,10 @@ std::optional<Rotation> MotionVector::grabbedRotation() const
     float yaw_c = 0;
     int c = 0;
     for(const auto &obj : manipulation_objects_)
-        if(obj->grabRotation() && obj->velocity().has_value())
+    {
+        bool b = obj->velocity().has_value();
+        bool a = obj->grabRotation();
+        if (a && b)
         {
             Vec3 vel = obj->velocity().value();
             roll_c += glm::degrees(glm::atan(vel.x, vel.z));
@@ -62,6 +66,7 @@ std::optional<Rotation> MotionVector::grabbedRotation() const
             yaw_c += glm::degrees(glm::atan(vel.y, vel.z));
             c++;
         }
+    }
     if(c == 0) return std::nullopt;
     return Rotation(roll_c / (float)c, pitch_c / (float)c, yaw_c / (float)c);
 }
