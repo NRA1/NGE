@@ -1,6 +1,9 @@
 #include "main.hpp"
 #include "game/user_object_type.hpp"
 
+void *unuse(void *) { return (void*)0; };
+
+
 bool delegates::collisionDelegate(WorldStage *stage, Object *object, Object *collider)
 {
     if (object->name().starts_with("bullet"))

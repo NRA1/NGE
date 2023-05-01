@@ -24,6 +24,8 @@ public:
 private:
     MotionManipulationObject *manipulation_obj_;
     std::optional<Vec2> last_mouse_move_pos;
+
+    Vec2 direction_;
 };
 
 

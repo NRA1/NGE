@@ -1,7 +1,7 @@
 #include "input_component.hpp"
 
 InputComponent::InputComponent(const std::string &name) : AbstractInputComponent(name), manipulation_obj_(nullptr),
-                                                          last_mouse_move_pos(std::nullopt)
+                                                          last_mouse_move_pos(std::nullopt), direction_(Vec2(0, 0))
 {
 }
 
@@ -9,39 +9,49 @@ bool InputComponent::keyPressEvent(KeyPressEvent *event)
 {
     if(!event->isRepeated())
     {
-        Vec3 vec;
-        if(manipulation_obj_->velocity().has_value()) vec = manipulation_obj_->velocity().value();
-        else vec = Vec3(0, 0, 0);
-
         if(event->key() == Key::KeyW)
-            vec.z = vec.z + 10;
+        {
+            direction_.y += 1;
+        }
         else if(event->key() == Key::KeyA)
-            vec.x = vec.x + 10;
+        {
+            direction_.x += 1;
+        }
         else if(event->key() == Key::KeyD)
-            vec.x = vec.x - 10;
+        {
+            direction_.x -= 1;
+        }
         else if(event->key() == Key::KeyS)
-            vec.z = vec.z - 10;
+        {
+            direction_.y -= 1;
+        }
 
-        manipulation_obj_->setVelocity(vec);
+        manipulation_obj_->setVelocity(glm::normalize(Vec3(direction_.x, 0, direction_.y)) * 10.0f);
     }
     return true;
 }
 
 bool InputComponent::keyReleaseEvent(KeyReleaseEvent *event)
 {
-    Vec3 vec;
-    if(manipulation_obj_->velocity().has_value()) vec = manipulation_obj_->velocity().value();
-    else vec = Vec3(0, 0, 0);
-
     if(event->key() == Key::KeyW)
-        vec.z = vec.z - 10;
+    {
+        direction_.y -= 1;
+    }
     else if(event->key() == Key::KeyA)
-        vec.x = vec.x - 10;
+    {
+        direction_.x -= 1;
+    }
     else if(event->key() == Key::KeyD)
-        vec.x = vec.x + 10;
+    {
+        direction_.x += 1;
+    }
     else if(event->key() == Key::KeyS)
-        vec.z = vec.z + 10;
-    manipulation_obj_->setVelocity(vec);
+    {
+        direction_.y += 1;
+    }
+
+    Vec3 vec = Vec3(direction_.x, 0, direction_.y);
+    manipulation_obj_->setVelocity(glm::length(vec) != 0 ? glm::normalize(vec) * 10.0f : vec);
     return true;
 }
 

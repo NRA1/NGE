@@ -6,7 +6,13 @@
 void NPCComponent::tick()
 {
     Object *player = object()->stage()->findObjectByName("player");
-    if(player == nullptr) return;
+    if (player == nullptr) return;
+    if (glm::distance(player->position(), object()->position()) > 1500)
+    {
+        mmo_->revert();
+        return;
+    }
+
     Vec3 vec = object()->position();
     vec = player->position() - vec;
     float len = glm::length(vec);
