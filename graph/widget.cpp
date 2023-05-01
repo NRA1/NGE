@@ -5,7 +5,9 @@ Widget::Widget(Widget *parent) : pos_(Vec2(0, 0)), z_pos_(0), visible_(true), la
                                  layout_origin_(LayoutOrigin::Center)
 {
     if(parent != nullptr)
+    {
         parent->children_.push_back(this);
+    }
 }
 
 const Vec2 &Widget::pos() const

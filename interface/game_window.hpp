@@ -25,6 +25,8 @@ public:
     bool isCursorVisible();
     void close();
 
+    void setCloseRequestedDelegate(bool (*closeRequestedDelegate)());
+
     ~GameWindow();
 
 private:
@@ -57,6 +59,8 @@ private:
     std::queue<StageAction> differ_queue_;
 
     bool shown_;
+
+    bool (*close_requested_delegate_)();
 };
 
 #endif //NGE_WINDOW_HPP

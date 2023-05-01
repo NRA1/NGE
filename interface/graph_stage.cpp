@@ -123,11 +123,12 @@ void GraphStage::addWidget(Widget *widget)
 {
     widgets_.push_back(widget);
     if(shown_)
-        widget->load();
+        recurseLoad(widget);
 }
 
 void GraphStage::deleteWidget(Widget *widget)
 {
+    recurseUnload(widget);
     std::erase(widgets_, widget);
     delete widget;
 }

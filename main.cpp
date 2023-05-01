@@ -36,7 +36,7 @@ bool delegates::collisionDelegate(WorldStage *stage, Object *object, Object *col
                         g_points += 5;
                         g_points_widget->setText("Points: " + std::to_string(g_points));
                         g_world_stage->setFreeze(true);
-                        setMenu(MenuMode::Play);
+                        setMenu(MenuMode::NextLevel);
                         setLevel(g_level + 1);
                         return true;
                     }
@@ -172,11 +172,12 @@ bool delegates::graphInputDelegate(GraphStage *, Event *event)
     if(event->type() == EventType::KeyPressEventType)
     {
         KeyPressEvent *ev = (KeyPressEvent*)event;
-        if(ev->key() == Key::KeyEscape && (g_menu_mode == MenuMode::Replay || g_menu_mode == MenuMode::Play))
+        if(ev->key() == Key::KeyEscape && (g_menu_mode == MenuMode::Replay || g_menu_mode == MenuMode::Play
+                                          || g_menu_mode == MenuMode::NextLevel))
         {
             if(g_menu_mode == MenuMode::Replay)
                 g_replay_stage->setFreeze(false);
-            else if(g_menu_mode == MenuMode::Play)
+            else if(g_menu_mode == MenuMode::Play || g_menu_mode == MenuMode::NextLevel)
                 g_world_stage->setFreeze(false);
             setMenu(MenuMode::Hidden);
 
@@ -238,7 +239,7 @@ void delegates::replay_finished_handler(ReplayStage *)
 
 bool delegates::replay_btn_handler()
 {
-    g_replay_stage = new ReplayStage(":/trackings/track1.dat");
+    g_replay_stage = new ReplayStage(":/trackings/track.dat");
     Object *object = new Object("player");
     object->setUserType(UserObjectType::PlayerType);
     MeshComponent *component = new MeshComponent("mesh", ":/models/bot/bot4.obj");
@@ -266,10 +267,17 @@ bool delegates::replay_btn_handler()
 
 bool delegates::return_btn_handler()
 {
-    g_window->insertStage(g_world_stage, 0);
-    g_window->disposeStage(g_replay_stage);
-    g_replay_stage = nullptr;
-    setMenu(MenuMode::Play);
+    if(g_menu_mode == MenuMode::Replay)
+    {
+        g_window->insertStage(g_world_stage, 0);
+        g_window->disposeStage(g_replay_stage);
+        g_replay_stage = nullptr;
+        setMenu(MenuMode::Play);
+    }
+    else if(g_menu_mode == MenuMode::Scoreboard)
+    {
+        setMenu(g_last_menu_mode.value());
+    }
 
     return true;
 }
@@ -281,6 +289,20 @@ bool delegates::login_btn_handler()
     setMenu(MenuMode::Play);
     return true;
 }
+
+bool delegates::scoreboard_btn_handler()
+{
+    g_last_menu_mode = g_menu_mode;
+    setMenu(MenuMode::Scoreboard);
+    return true;
+}
+
+bool delegates::close_requested_handler()
+{
+    ::putStats();
+    return true;
+}
+
 
 #ifdef __unix__
 int main()
@@ -311,6 +333,7 @@ void run()
     {
         SaveManager::setComponentLoader(&delegates::componentLoader);
         g_window = new GameWindow("NGE", 1000, 700, 0);
+        g_window->setCloseRequestedDelegate(&delegates::close_requested_handler);
         GraphStage *graph = new GraphStage();
         g_username_widget = new TextWidget("", ":/fonts/arial.ttf", 20, Vec4(1, 1, 1, 1));
         g_level_widget = new TextWidget("Level " + std::to_string(g_level), ":/fonts/arial.ttf", 20, Vec4(1, 1, 1, 1));
@@ -353,6 +376,11 @@ void run()
         g_login_entry->setLayoutOrigin(LayoutOrigin::Center);
         g_login_entry->setPos(Vec2(-130, 35));
 
+        g_next_level_label = new TextWidget("Next level!", ":/fonts/arial.ttf", 75);
+        g_next_level_label->setZPos(-0.2);
+        g_next_level_label->setLayoutOrigin(LayoutOrigin::Center);
+        g_next_level_label->setPos(Vec2(-130, 35));
+
         g_replay_btn = new ButtonWidget("Replay", Rect(0, 0, 300, 50), &delegates::replay_btn_handler,
                                         Vec4(1, 1, 1, 1), Vec4(0, 0, 0, 1), 40);
         g_replay_btn->setZPos(-0.5);
@@ -376,6 +404,14 @@ void run()
         g_exit_btn = new ButtonWidget("Exit", Rect(0, 0, 300, 50), &delegates::exit_btn_handler,
                                       Vec4(1, 1, 1, 1), Vec4(0, 0, 0, 1), 40);
         g_exit_btn->setZPos(-0.5);
+
+        g_scoreboard_btn = new ButtonWidget("Scoreboard", Rect(0, 0, 300, 50), &delegates::scoreboard_btn_handler,
+                                      Vec4(1, 1, 1, 1), Vec4(0, 0, 0, 1), 40);
+        g_scoreboard_btn->setZPos(-0.5);
+
+        g_scoreboard = new ScoreboardWidget({ });
+        g_scoreboard_btn->setZPos(-0.5);
+
         graph->addWidget(g_replay_btn);
         graph->addWidget(g_save_btn);
         graph->addWidget(g_load_btn);
@@ -383,7 +419,10 @@ void run()
         graph->addWidget(g_exit_btn);
         graph->addWidget(g_lost_label);
         graph->addWidget(g_login_btn);
+        graph->addWidget(g_scoreboard_btn);
         graph->addWidget(g_login_entry);
+        graph->addWidget(g_next_level_label);
+        graph->addWidget(g_scoreboard);
         g_window->setCursorVisibility(false);
         setLevel(1);
         graph->setFallbackEventHandler(&delegates::graphInputDelegate);
@@ -538,7 +577,7 @@ void setLevel(unsigned int level)
     player->addComponent(player_input);
     player->setPosition(Vec3(player_pos.x, 0, player_pos.y));
     stage->addObject(player);
-    stage->setTrackFilePath(":/trackings/track1.dat");
+    stage->setTrackFilePath(":/trackings/track.dat");
     stage->setTrackObject("player");
     stage->setCamera(camera);
     stage->setFreeze(true);
@@ -556,6 +595,9 @@ void setLevel(unsigned int level)
 
 void setMenu(MenuMode mode)
 {
+    if(mode == MenuMode::Play || mode == MenuMode::NextLevel || mode == MenuMode::Lost)
+        putStats();
+
     switch (mode)
     {
         case Hidden:
@@ -567,8 +609,11 @@ void setMenu(MenuMode mode)
             g_exit_btn->setVisible(false);
             g_return_btn->setVisible(false);
             g_login_btn->setVisible(false);
+            g_scoreboard_btn->setVisible(false);
             g_lost_label->setVisible(false);
             g_login_entry->setVisible(false);
+            g_next_level_label->setVisible(false);
+            g_scoreboard->setVisible(false);
             break;
         case Login:
             g_window->setCursorVisibility(true);
@@ -583,12 +628,15 @@ void setMenu(MenuMode mode)
             g_exit_btn->setVisible(true);
             g_return_btn->setVisible(false);
             g_login_btn->setVisible(!g_username.empty());
+            g_scoreboard_btn->setVisible(false);
             g_lost_label->setVisible(false);
             g_login_entry->setVisible(true);
+            g_next_level_label->setVisible(false);
+            g_scoreboard->setVisible(false);
             break;
         case Play:
             g_window->setCursorVisibility(true);
-//            g_scoreboard_btn->setPos(Vec2(-130, 90)); //TODO: scoreboard
+            g_scoreboard_btn->setPos(Vec2(-150, 90));
             g_replay_btn->setPos(Vec2(-150, 35));
             g_save_btn->setPos(Vec2(-150, -20));
             g_load_btn->setPos(Vec2(-150, -75));
@@ -601,8 +649,11 @@ void setMenu(MenuMode mode)
             g_exit_btn->setVisible(true);
             g_return_btn->setVisible(false);
             g_login_btn->setVisible(false);
+            g_scoreboard_btn->setVisible(true);
             g_lost_label->setVisible(false);
             g_login_entry->setVisible(false);
+            g_next_level_label->setVisible(false);
+            g_scoreboard->setVisible(false);
             break;
         case Replay:
             g_window->setCursorVisibility(true);
@@ -617,13 +668,16 @@ void setMenu(MenuMode mode)
             g_exit_btn->setVisible(true);
             g_return_btn->setVisible(true);
             g_login_btn->setVisible(false);
+            g_scoreboard_btn->setVisible(false);
             g_lost_label->setVisible(false);
             g_login_entry->setVisible(false);
+            g_next_level_label->setVisible(false);
+            g_scoreboard->setVisible(false);
             break;
         case Lost:
             g_window->setCursorVisibility(true);
             g_lost_label->setPos(Vec2(-150, 72));
-            //TODO: scoreboard (-150, 17)
+            g_scoreboard_btn->setPos(Vec2(-150, 13));
             g_replay_btn->setPos(Vec2(-150, -42));
             g_load_btn->setPos(Vec2(-150, -97));
             g_exit_btn->setPos(Vec2(-150, -152));
@@ -635,8 +689,53 @@ void setMenu(MenuMode mode)
             g_exit_btn->setVisible(true);
             g_return_btn->setVisible(false);
             g_login_btn->setVisible(false);
+            g_scoreboard_btn->setVisible(true);
             g_lost_label->setVisible(true);
             g_login_entry->setVisible(false);
+            g_next_level_label->setVisible(false);
+            g_scoreboard->setVisible(false);
+            break;
+        case NextLevel:
+            g_window->setCursorVisibility(true);
+            g_next_level_label->setPos(Vec2(-150, 160));
+            g_scoreboard_btn->setPos(Vec2(-150, 90));
+            g_replay_btn->setPos(Vec2(-150, 35));
+            g_save_btn->setPos(Vec2(-150, -20));
+            g_load_btn->setPos(Vec2(-150, -75));
+            g_exit_btn->setPos(Vec2(-150, -130));
+
+            g_background->setVisible(true);
+            g_replay_btn->setVisible(true);
+            g_save_btn->setVisible(true);
+            g_load_btn->setVisible(true);
+            g_exit_btn->setVisible(true);
+            g_return_btn->setVisible(false);
+            g_login_btn->setVisible(false);
+            g_scoreboard_btn->setVisible(true);
+            g_lost_label->setVisible(false);
+            g_login_entry->setVisible(false);
+            g_next_level_label->setVisible(true);
+            g_scoreboard->setVisible(false);
+            break;
+        case Scoreboard:
+            g_window->setCursorVisibility(true);
+            g_return_btn->setPos(Vec2(-150, -300));
+
+            std::vector<StatsEntry> entries = StatsManager::getTopFive(":/stats/stats.dat");
+            g_scoreboard->setEntries(entries);
+
+            g_background->setVisible(true);
+            g_replay_btn->setVisible(false);
+            g_save_btn->setVisible(false);
+            g_load_btn->setVisible(false);
+            g_exit_btn->setVisible(false);
+            g_return_btn->setVisible(true);
+            g_login_btn->setVisible(false);
+            g_scoreboard_btn->setVisible(false);
+            g_lost_label->setVisible(false);
+            g_login_entry->setVisible(false);
+            g_next_level_label->setVisible(false);
+            g_scoreboard->setVisible(true);
             break;
     }
     g_menu_mode = mode;
@@ -647,7 +746,7 @@ void load()
     try
     {
         GSaveData data;
-        WorldStage *world_stage_t = SaveManager::load(":/save/save1.dat", &data, sizeof(GSaveData));
+        WorldStage *world_stage_t = SaveManager::load(":/save/save.dat", &data, sizeof(GSaveData));
         world_stage_t->setCollisionDelegate(&delegates::collisionDelegate);
         world_stage_t->setInputDelegate(&delegates::inputDelegate);
         world_stage_t->setOffworldDelegate(&delegates::offworldDelegate);
@@ -678,10 +777,19 @@ void dump()
     try
     {
         GSaveData data { g_enemies, g_arenas, g_level, g_points };
-        SaveManager::dump(g_world_stage, ":/save/save1.dat", &data, sizeof(GSaveData));
+        SaveManager::dump(g_world_stage, ":/save/save.dat", &data, sizeof(GSaveData));
     }
     catch (char *err)
     {
         log() - Critical < "Failed to save:" < err;
     }
+}
+
+void putStats()
+{
+    StatsEntry entry;
+    strcpy(entry.Player, g_username.c_str());
+    entry.Level = g_level;
+    entry.Points = g_points;
+    StatsManager::put(":/stats/stats.dat", entry);
 }

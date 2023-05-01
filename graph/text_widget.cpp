@@ -6,13 +6,14 @@
 
 TextWidget::TextWidget(std::string text, std::string font, unsigned int font_size, Vec4 color, Widget *parent)
         : Widget(parent), text_(std::move(text)), font_(std::move(font)), font_size_(font_size), color_(color),
-          bounding_rect_(Rect())
+          VAO_(0), VBO_(0), bounding_rect_(Rect())
 {
 
 }
 
 TextWidget::TextWidget(std::string text, Widget *parent)
-        : Widget(parent), text_(std::move(text)), font_(":/fonts/arial.ttf"), font_size_(20), color_(1, 1, 1, 1)
+        : Widget(parent), text_(std::move(text)), font_(":/fonts/arial.ttf"), font_size_(20), color_(1, 1, 1, 1),
+          VAO_(0), VBO_(0)
 {
 
 }

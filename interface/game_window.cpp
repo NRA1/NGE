@@ -38,7 +38,7 @@ void GameWindow::exec()
 
     unsigned int last_render = (unsigned int)duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
             .time_since_epoch()).count();
-    while (!native_->shouldClose())
+    while (!native_->shouldClose() && (close_requested_delegate_ == nullptr || close_requested_delegate_()))
     {
         native_->poolEvents();
         unsigned int time = (unsigned int)duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
@@ -156,5 +156,10 @@ void GameWindow::differedInsertStage(AbstractStage *stage, unsigned int index)
         stage->viewportSizeChanged(native_->size());
         stage->onAppearing();
     }
+}
+
+void GameWindow::setCloseRequestedDelegate(bool (*closeRequestedDelegate)())
+{
+    close_requested_delegate_ = closeRequestedDelegate;
 }
 

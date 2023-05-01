@@ -23,6 +23,7 @@
 #include "enums/layout_flags.hpp"
 #include "game/game_component_type.hpp"
 #include "interface/replay_stage.hpp"
+#include "game/scoreboard_widget.hpp"
 #include <random>
 
 
@@ -51,6 +52,8 @@ enum MenuMode
     Play,
     Replay,
     Lost,
+    NextLevel,
+    Scoreboard
 } g_menu_mode;
 
 void run();
@@ -60,6 +63,7 @@ void setLevel(unsigned int level);
 void setMenu(MenuMode mode);
 void load();
 void dump();
+void putStats();
 
 
 namespace delegates
@@ -79,6 +83,8 @@ namespace delegates
     bool replay_btn_handler();
     bool return_btn_handler();
     bool login_btn_handler();
+    bool scoreboard_btn_handler();
+    bool close_requested_handler();
 }
 
 unsigned int g_enemies = 0;
@@ -87,6 +93,7 @@ unsigned int g_level = 0;
 unsigned int g_points = 0;
 
 std::string g_username;
+std::optional<MenuMode> g_last_menu_mode;
 
 GameWindow *g_window;
 WorldStage *g_world_stage = nullptr;
@@ -105,7 +112,12 @@ ButtonWidget *g_load_btn;
 ButtonWidget *g_exit_btn;
 ButtonWidget *g_return_btn;
 ButtonWidget *g_login_btn;
+ButtonWidget *g_scoreboard_btn;
 TextWidget *g_lost_label;
 TextWidget *g_login_entry;
+TextWidget *g_next_level_label;
+ScoreboardWidget *g_scoreboard;
+
+
 
 #endif //NGE_MAIN_HPP
