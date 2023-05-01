@@ -50,6 +50,10 @@ public:
 
     virtual ~Widget();
 
+protected:
+    void loadChildren();
+    void deleteChildren();
+
 private:
     Vec2 pos_;
     float z_pos_;

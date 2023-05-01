@@ -24,14 +24,19 @@ void StatsManager::put(const std::string &path, const struct StatsEntry &stats)
         struct StatsEntry entry;
         while (ifs.read((char *) &entry, sizeof(StatsEntry)))
         {
+            if (stats.Points > entry.Points && !written)
+            {
+                ofs.write((char *) &stats, sizeof(StatsEntry));
+                written = true;
+            }
             if (strcmp(entry.Player, stats.Player) != 0)
             {
-                if (stats.Points > entry.Points)
-                {
-                    ofs.write((char *) &stats, sizeof(StatsEntry));
-                    written = true;
-                }
                 ofs.write((char *) &entry, sizeof(StatsEntry));
+            }
+            else if(!written)
+            {
+                ofs.write((char *) &entry, sizeof(StatsEntry));
+                written = true;
             }
         }
 

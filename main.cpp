@@ -41,6 +41,7 @@ bool delegates::collisionDelegate(WorldStage *stage, Object *object, Object *col
                         g_world_stage->setFreeze(true);
                         setMenu(MenuMode::NextLevel);
                         setLevel(g_level + 1);
+                        ::putStats();
                         return true;
                     }
                 }
@@ -145,8 +146,9 @@ bool delegates::offworldDelegate(WorldStage *stage, Object *obj)
         g_points += 5;
         g_points_widget->setText("Points: " + std::to_string(g_points));
         g_world_stage->setFreeze(true);
-        setMenu(MenuMode::Play);
+        setMenu(MenuMode::NextLevel);
         setLevel(g_level + 1);
+        putStats();
         return true;
     }
 

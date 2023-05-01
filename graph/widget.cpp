@@ -127,8 +127,23 @@ Widget *Widget::parent() const
 
 Widget::~Widget()
 {
+    deleteChildren();
+}
+
+void Widget::deleteChildren()
+{
     for(auto &child : children_)
+    {
+        child->unload();
         delete child;
+    }
+    children_.clear();
+}
+
+void Widget::loadChildren()
+{
+    for(auto &child : children_)
+        child->load();
 }
 
 

@@ -38,7 +38,7 @@ void GameWindow::exec()
 
     unsigned int last_render = (unsigned int)duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
             .time_since_epoch()).count();
-    while (!native_->shouldClose() && (close_requested_delegate_ == nullptr || close_requested_delegate_()))
+    while (!(native_->shouldClose() && (close_requested_delegate_ == nullptr || close_requested_delegate_())))
     {
         native_->poolEvents();
         unsigned int time = (unsigned int)duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
