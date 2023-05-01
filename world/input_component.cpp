@@ -1,7 +1,12 @@
 #include "input_component.hpp"
 
 InputComponent::InputComponent(const std::string &name) : AbstractInputComponent(name), manipulation_obj_(nullptr),
-                                                          last_mouse_move_pos(std::nullopt), direction_(Vec2(0, 0))
+                                                          last_mouse_move_pos(std::nullopt), direction_(Vec2(0.0f, 0.0f))
+{
+}
+
+InputComponent::InputComponent(std::ifstream &ifs) : AbstractInputComponent(ifs), manipulation_obj_(nullptr),
+                                                     last_mouse_move_pos(std::nullopt), direction_(Vec2(0.0f, 0.0f))
 {
 }
 
@@ -11,22 +16,22 @@ bool InputComponent::keyPressEvent(KeyPressEvent *event)
     {
         if(event->key() == Key::KeyW)
         {
-            direction_.y += 1;
+            direction_.y += 1.0f;
         }
         else if(event->key() == Key::KeyA)
         {
-            direction_.x += 1;
+            direction_.x += 1.0f;
         }
         else if(event->key() == Key::KeyD)
         {
-            direction_.x -= 1;
+            direction_.x -= 1.0f;
         }
         else if(event->key() == Key::KeyS)
         {
-            direction_.y -= 1;
+            direction_.y -= 1.0f;
         }
 
-        manipulation_obj_->setVelocity(glm::normalize(Vec3(direction_.x, 0, direction_.y)) * 10.0f);
+        manipulation_obj_->setVelocity(glm::normalize(Vec3(direction_.x, 0.0f, direction_.y)) * 10.0f);
     }
     return true;
 }
@@ -35,22 +40,22 @@ bool InputComponent::keyReleaseEvent(KeyReleaseEvent *event)
 {
     if(event->key() == Key::KeyW)
     {
-        direction_.y -= 1;
+        direction_.y -= 1.0f;
     }
     else if(event->key() == Key::KeyA)
     {
-        direction_.x -= 1;
+        direction_.x -= 1.0f;
     }
     else if(event->key() == Key::KeyD)
     {
-        direction_.x += 1;
+        direction_.x += 1.0f;
     }
     else if(event->key() == Key::KeyS)
     {
-        direction_.y += 1;
+        direction_.y += 1.0f;
     }
 
-    Vec3 vec = Vec3(direction_.x, 0, direction_.y);
+    Vec3 vec = Vec3(direction_.x, 0.0f, direction_.y);
     manipulation_obj_->setVelocity(glm::length(vec) != 0 ? glm::normalize(vec) * 10.0f : vec);
     return true;
 }
@@ -73,10 +78,6 @@ InputComponent::~InputComponent()
     object()->motionVector().destroyManipulationObject(manipulation_obj_);
 }
 
-InputComponent::InputComponent(std::ifstream &ifs) : AbstractInputComponent(ifs), manipulation_obj_(nullptr),
-                                                     last_mouse_move_pos(std::nullopt)
-{
-}
 
 unsigned int InputComponent::type()
 {
