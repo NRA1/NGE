@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.0)
 project(glad)
 
 add_library(glad include/glad/gl.h src/gl.c)
+target_compile_definitions(glad PUBLIC GLAD_GLAPI_EXPORT PRIVATE GLAD_GLAPI_EXPORT_BUILD)
 target_include_directories(glad PUBLIC include/)
 
 if (UNIX)

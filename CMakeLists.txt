@@ -2,11 +2,20 @@ cmake_minimum_required(VERSION 3.24)
 project(NGE)
 
 set(CMAKE_CXX_STANDARD 20)
+
 add_subdirectory(lib/glad)
 add_subdirectory(lib/stb_image)
 add_subdirectory(lib/assimp)
 add_subdirectory(lib/glm)
 add_subdirectory(lib/freetype)
+
+#for WIN32
+if(WIN32)
+    add_compile_definitions(WIN32_LEAN_AND_MEAN)
+    add_compile_definitions(NOMINMAX)
+    set(BUILD_SHARED_LIBS TRUE)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+endif()
 
 #for profiler
 if(UNIX)
@@ -14,17 +23,13 @@ if(UNIX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 endif()
 
-#for WIN32
-add_compile_definitions(WIN32_LEAN_AND_MEAN)
-add_compile_definitions(NOMINMAX)
-
 #settings
 if(UNIX)
     add_compile_definitions(RESOURCES_PREFIX_PATH="../")
     add_compile_definitions(DIRECTORY_SEPARATOR='/')
 elseif(WIN32)
-    add_compile_definitions(RESOURCES_PREFIX_PATH="..\\\\..\\\\..\\\\")
-    #add_compile_definitions(RESOURCES_PREFIX_PATH="..\\\\")
+    #add_compile_definitions(RESOURCES_PREFIX_PATH="..\\\\..\\\\..\\\\")
+    add_compile_definitions(RESOURCES_PREFIX_PATH="..\\\\")
     add_compile_definitions(DIRECTORY_SEPARATOR='\\\\')
 endif()
 

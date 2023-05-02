@@ -475,7 +475,7 @@ void run()
         graph->setFallbackEventHandler(&delegates::graphInputDelegate);
         g_window->pushStage(graph);
         setMenu(MenuMode::Login);
-
+        
         dump();
 
         g_window->exec();
