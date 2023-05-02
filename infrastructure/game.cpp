@@ -69,7 +69,7 @@ void Game::shutdown()
 
 void Game::fault()
 {
-    Game::shutdown();
+    cleanup();
     exit(-1);
 }
 
