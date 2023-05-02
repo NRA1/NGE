@@ -24,6 +24,7 @@
 #include "game/game_component_type.hpp"
 #include "interface/replay_stage.hpp"
 #include "game/scoreboard_widget.hpp"
+#include "enums/modifier.hpp"
 #include <random>
 
 

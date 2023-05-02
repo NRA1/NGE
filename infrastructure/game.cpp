@@ -16,6 +16,12 @@ void Game::initialize(WinmainConfig winmain_config)
         return;
     }
 
+    if (FT_Init_FreeType(&ft_))
+    {
+        log() - Critical < "Could not init FreeType library. Faulting";
+        fault();
+    }
+
     initialized_ = true;
 }
 

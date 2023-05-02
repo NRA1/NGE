@@ -40,7 +40,18 @@ bool delegates::collisionDelegate(WorldStage *stage, Object *object, Object *col
                         g_points_widget->setText("Points: " + std::to_string(g_points));
                         g_world_stage->setFreeze(true);
                         setMenu(MenuMode::NextLevel);
+
+                        g_world_stage->setTrackFilePath(std::nullopt);
+
+                        std::string full_path = ResourceLoader::fullPath(":/trackings/track.dat").string();
+                        remove(full_path.c_str());
+                        if (rename((full_path + ".part").c_str(), full_path.c_str()))
+                        {
+                            log() - Critical < "Failed to rename track file to destination";
+                        }
+
                         setLevel(g_level + 1);
+
                         ::putStats();
                         return true;
                     }
@@ -147,8 +158,19 @@ bool delegates::offworldDelegate(WorldStage *stage, Object *obj)
         g_points_widget->setText("Points: " + std::to_string(g_points));
         g_world_stage->setFreeze(true);
         setMenu(MenuMode::NextLevel);
+
+        g_world_stage->setTrackFilePath(std::nullopt);
+
+        std::string full_path = ResourceLoader::fullPath(":/trackings/track.dat").string();
+        remove(full_path.c_str());
+        if (rename((full_path + ".part").c_str(), full_path.c_str()))
+        {
+            log() - Critical < "Failed to rename track file to destination";
+        }
+
         setLevel(g_level + 1);
         putStats();
+
         return true;
     }
 
@@ -244,6 +266,11 @@ void delegates::replay_finished_handler(ReplayStage *)
 
 bool delegates::replay_btn_handler()
 {
+    if (g_replay_stage != nullptr)
+    {
+        g_window->disposeStage(g_replay_stage);
+    }
+
     g_replay_stage = new ReplayStage(":/trackings/track.dat");
     Object *object = new Object("player");
     object->setUserType(UserObjectType::PlayerType);
@@ -254,17 +281,31 @@ bool delegates::replay_btn_handler()
     g_replay_stage->setFinishedDelegate(delegates::replay_finished_handler);
     g_replay_stage->setFreeze(true);
 
-    Ground *ground = new Ground(Rect(-((float)BASE_LEVEL_SIZE / 2) * (float)g_level,
-                                     -((float)BASE_LEVEL_SIZE / 2) * (float)g_level,
-                                     BASE_LEVEL_SIZE * (float)g_level, BASE_LEVEL_SIZE * (float)g_level),
+    unsigned int level = g_menu_mode == MenuMode::NextLevel ? g_level - 1 : g_level;
+
+    Ground *ground = new Ground(Rect(-((float)BASE_LEVEL_SIZE / 2) * (float)level,
+                                     -((float)BASE_LEVEL_SIZE / 2) * (float)level,
+                                     BASE_LEVEL_SIZE * (float)level, BASE_LEVEL_SIZE * (float)level),
                                 ":/models/ground/color.jpg");
     Camera *camera = new Camera();
     g_replay_stage->setGround(ground);
     g_replay_stage->setCamera(camera);
     camera->setTargetObject(object);
-    camera->setPosition(Vec3(50.0f, 100.0f, -200.0f));
+    camera->setPosition(Vec3(0.0f, 150.0f, -150.0f));
 
-    g_window->eraseStage(g_world_stage);
+    if(g_menu_mode != MenuMode::Replay)
+        g_window->eraseStage(g_world_stage);
+    if (g_menu_mode != MenuMode::NextLevel && g_menu_mode != MenuMode::Replay)
+    {
+        g_world_stage->setTrackFilePath(std::nullopt);
+        std::string full_path = ResourceLoader::fullPath(":/trackings/track.dat").string();
+        remove(full_path.c_str());
+        if (rename((full_path + ".part").c_str(), full_path.c_str()))
+        {
+            log() - Critical < "Failed to rename track file to destination";
+        }
+    }
+
     g_window->insertStage(g_replay_stage, 0);
     setMenu(MenuMode::Replay);
     return true;
@@ -274,6 +315,7 @@ bool delegates::return_btn_handler()
 {
     if(g_menu_mode == MenuMode::Replay)
     {
+        g_world_stage->setTrackFilePath(":/trackings/track.dat.part");
         g_window->insertStage(g_world_stage, 0);
         g_window->disposeStage(g_replay_stage);
         g_replay_stage = nullptr;
@@ -355,11 +397,11 @@ void run()
         g_points_widget->setLayoutOrigin(LayoutOrigin::Top | LayoutOrigin::Right);
         g_enemies_widget->setLayoutOrigin(LayoutOrigin::Top | LayoutOrigin::Right);
         g_arenas_widget->setLayoutOrigin(LayoutOrigin::Top | LayoutOrigin::Right);
-        g_username_widget->setZPos(-0.7);
-        g_level_widget->setZPos(-0.7);
-        g_points_widget->setZPos(-0.7);
-        g_arenas_widget->setZPos(-0.7);
-        g_enemies_widget->setZPos(-0.7);
+        g_username_widget->setZPos(-0.7f);
+        g_level_widget->setZPos(-0.7f);
+        g_points_widget->setZPos(-0.7f);
+        g_arenas_widget->setZPos(-0.7f);
+        g_enemies_widget->setZPos(-0.7f);
         graph->addWidget(g_username_widget);
         graph->addWidget(g_level_widget);
         graph->addWidget(g_points_widget);
@@ -368,54 +410,54 @@ void run()
         g_background = new RectWidget(Rect(0, 0, 100, 100), Vec4(0, 0, 0, 0.5));
         g_background->setLayoutOrigin(LayoutOrigin::Bottom | LayoutOrigin::Left);
         g_background->setLayoutFlags(LayoutFlags::SizeRelative);
-        g_background->setZPos(-0.3);
+        g_background->setZPos(-0.3f);
         graph->addWidget(g_background);
 
         g_lost_label = new TextWidget("Lost!", ":/fonts/arial.ttf", 75);
-        g_lost_label->setZPos(-0.2);
+        g_lost_label->setZPos(-0.2f);
         g_lost_label->setLayoutOrigin(LayoutOrigin::Center);
         g_lost_label->setPos(Vec2(-130, 35));
 
         g_login_entry = new TextWidget("Login: ", ":/fonts/arial.ttf", 40);
-        g_login_entry->setZPos(-0.2);
+        g_login_entry->setZPos(-0.2f);
         g_login_entry->setLayoutOrigin(LayoutOrigin::Center);
         g_login_entry->setPos(Vec2(-130, 35));
 
         g_next_level_label = new TextWidget("Next level!", ":/fonts/arial.ttf", 75);
-        g_next_level_label->setZPos(-0.2);
+        g_next_level_label->setZPos(-0.2f);
         g_next_level_label->setLayoutOrigin(LayoutOrigin::Center);
         g_next_level_label->setPos(Vec2(-130, 35));
 
         g_replay_btn = new ButtonWidget("Replay", Rect(0, 0, 300, 50), &delegates::replay_btn_handler,
                                         Vec4(1, 1, 1, 1), Vec4(0, 0, 0, 1), 40);
-        g_replay_btn->setZPos(-0.5);
+        g_replay_btn->setZPos(-0.5f);
 
         g_return_btn = new ButtonWidget("Return", Rect(0, 0, 300, 50), &delegates::return_btn_handler,
                                         Vec4(1, 1, 1, 1), Vec4(0, 0, 0, 1), 40);
-        g_return_btn->setZPos(-0.5);
+        g_return_btn->setZPos(-0.5f);
 
         g_save_btn = new ButtonWidget("Save", Rect(0, 0, 300, 50), &delegates::save_btn_handler,
                                       Vec4(1, 1, 1, 1), Vec4(0, 0, 0, 1), 40);
-        g_save_btn->setZPos(-0.5);
+        g_save_btn->setZPos(-0.5f);
 
         g_load_btn = new ButtonWidget("Load", Rect(0, 0, 300, 50), &delegates::load_btn_handler,
                                       Vec4(1, 1, 1, 1), Vec4(0, 0, 0, 1), 40);
-        g_load_btn->setZPos(-0.5);
+        g_load_btn->setZPos(-0.5f);
 
         g_login_btn = new ButtonWidget("Login", Rect(0, 0, 300, 50), &delegates::login_btn_handler,
                                        Vec4(1, 1, 1, 1), Vec4(0, 0, 0, 1), 40);
-        g_login_btn->setZPos(-0.5);
+        g_login_btn->setZPos(-0.5f);
 
         g_exit_btn = new ButtonWidget("Exit", Rect(0, 0, 300, 50), &delegates::exit_btn_handler,
                                       Vec4(1, 1, 1, 1), Vec4(0, 0, 0, 1), 40);
-        g_exit_btn->setZPos(-0.5);
+        g_exit_btn->setZPos(-0.5f);
 
         g_scoreboard_btn = new ButtonWidget("Scoreboard", Rect(0, 0, 300, 50), &delegates::scoreboard_btn_handler,
                                       Vec4(1, 1, 1, 1), Vec4(0, 0, 0, 1), 40);
-        g_scoreboard_btn->setZPos(-0.5);
+        g_scoreboard_btn->setZPos(-0.5f);
 
         g_scoreboard = new ScoreboardWidget({ });
-        g_scoreboard_btn->setZPos(-0.5);
+        g_scoreboard_btn->setZPos(-0.5f);
 
         graph->addWidget(g_replay_btn);
         graph->addWidget(g_save_btn);
@@ -468,8 +510,8 @@ GComplex createComplex(Vec2 pos, unsigned int id, unsigned int difficulty)
         MeshComponent *enemy_comp = new MeshComponent("mesh", ":/models/bot/bot4.obj");
         NPCComponent *enemy_npc = new NPCComponent("npc");
         BarComponent *enemy_life = new BarComponent("life", difficulty * 30, difficulty * 30);
-        float x = (COMPLEX_RADIUS - 50) * glm::acos(glm::radians(a * (float)i));
-        float y = (COMPLEX_RADIUS - 50) * glm::asin(glm::radians(a * (float)i));
+        float x = (COMPLEX_RADIUS - 50) * glm::cos(glm::radians(a * (float)i));
+        float y = (COMPLEX_RADIUS - 50) * glm::sin(glm::radians(a * (float)i));
         enemy->setPosition(Vec3(pos.x + x, 0, pos.y + y));
         enemy->addComponent(enemy_comp);
         enemy->addComponent(enemy_npc);
@@ -487,8 +529,10 @@ int generateRand(int low, int high)
 {
     std::random_device dev;
     static std::mt19937 rng(dev());
-    std::uniform_int_distribution<std::mt19937::result_type> dist(low, high);
-    return (int)dist(rng);
+    unsigned int top = high - low;
+    std::uniform_int_distribution<std::mt19937::result_type> dist(0, top);
+    int val = (int)dist(rng);
+    return low + val;
 }
 
 void setLevel(unsigned int level)
@@ -582,7 +626,7 @@ void setLevel(unsigned int level)
     player->addComponent(player_input);
     player->setPosition(Vec3(player_pos.x, 0, player_pos.y));
     stage->addObject(player);
-    stage->setTrackFilePath(":/trackings/track.dat");
+    stage->setTrackFilePath(":/trackings/track.dat.part");
     stage->setTrackObject("player");
     stage->setCamera(camera);
     stage->setFreeze(true);
@@ -659,6 +703,13 @@ void setMenu(MenuMode mode)
             g_login_entry->setVisible(false);
             g_next_level_label->setVisible(false);
             g_scoreboard->setVisible(false);
+
+
+            g_arenas_widget->setVisible(true);
+            g_enemies_widget->setVisible(true);
+            g_level_widget->setVisible(true);
+            g_username_widget->setVisible(true);
+            g_points_widget->setVisible(true);
             break;
         case Replay:
             g_window->setCursorVisibility(true);
@@ -678,6 +729,12 @@ void setMenu(MenuMode mode)
             g_login_entry->setVisible(false);
             g_next_level_label->setVisible(false);
             g_scoreboard->setVisible(false);
+
+            g_arenas_widget->setVisible(false);
+            g_enemies_widget->setVisible(false);
+            g_level_widget->setVisible(false);
+            g_username_widget->setVisible(false);
+            g_points_widget->setVisible(false);
             break;
         case Lost:
             g_window->setCursorVisibility(true);
@@ -793,7 +850,7 @@ void dump()
 void putStats()
 {
     StatsEntry entry;
-    strcpy(entry.Player, g_username.c_str());
+    strcpy_s(entry.Player, 20, g_username.c_str());
     entry.Level = g_level;
     entry.Points = g_points;
     StatsManager::put(":/stats/stats.dat", entry);

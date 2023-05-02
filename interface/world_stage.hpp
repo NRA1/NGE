@@ -32,6 +32,7 @@ public:
     void addObject(Object *object);
     void removeObject(Object *object);
     void setCamera(Camera *camera);
+    Ground* ground() const;
     void setGround(Ground *ground);
     void setCollisionDelegate(bool (*collision_delegate)(WorldStage *, Object *, Object *));
     void setInputDelegate(bool (*input_delegate)(WorldStage *, Event *));

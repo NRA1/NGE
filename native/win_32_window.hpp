@@ -13,6 +13,8 @@
 #include "../data_objects/events/key_press_event.hpp"
 #include "../data_objects/events/key_release_event.hpp"
 #include "../data_objects/events/mouse_move_event.hpp"
+#include "../data_objects/events/mouse_press_event.h"
+#include "../data_objects/events/mouse_release_event.h"
 #include "native_helpers.hpp"
 
 template<class T>

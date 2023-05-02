@@ -151,7 +151,8 @@ bool ResourceLoader::loadFont(const std::string &font, unsigned int size)
         return false;
     }
     FT_Face face;
-    if(FT_New_Face(Game::freeType(), fullPath(font).c_str(), 0, &face)) return false;
+    if(FT_New_Face(Game::freeType(), fullPath(font).string().c_str(), 0, &face))
+        return false;
     FT_Set_Pixel_Sizes(face, 0, size);
 
     for(unsigned char c = 0; c < 128; c++)

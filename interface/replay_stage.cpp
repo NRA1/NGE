@@ -53,7 +53,7 @@ void ReplayStage::onAppearing()
     shader_program_ = new ShaderProgram(":/shaders/world/vertex.vert", ":/shaders/world/fragment.frag");
     if(object_ != nullptr)
         object_->load();
-    track_file_ = std::ifstream(ResourceLoader::fullPath(track_file_path_));
+    track_file_ = std::ifstream(ResourceLoader::fullPath(track_file_path_), std::ios::binary);
     if(!track_file_.is_open())
     {
         log() - Critical < "Failed to open track file. Unable to replay";
@@ -110,7 +110,7 @@ void ReplayStage::tick(unsigned int time)
     }
     else
     {
-        if(last_stamp_->Delta + time <= 0)
+        if(last_stamp_->Delta + (int)time <= 0)
         {
             float multiplier = (float)time / -(float)last_stamp_->Delta;
             Vec3 dpos = (last_stamp_->Pos - object_->position()) * multiplier;
@@ -127,12 +127,12 @@ void ReplayStage::tick(unsigned int time)
                 setFreeze(true);
                 return;
             }
-            float multiplier = (float)(time - last_stamp_->Delta) / (float)stamp.Delta;
+            float multiplier = (float)(time + last_stamp_->Delta) / (float)stamp.Delta;
             Vec3 dpos = (stamp.Pos - last_stamp_->Pos) * multiplier;
             Vec3 drot = (stamp.Rotation - last_stamp_->Rotation) * multiplier;
             object_->setPosition(last_stamp_->Pos + dpos);
             object_->setRotation(last_stamp_->Rotation + drot);
-            stamp.Delta = -(stamp.Delta - (time - last_stamp_->Delta));
+            stamp.Delta = -(stamp.Delta - ((int)time - last_stamp_->Delta));
             last_stamp_ = stamp;
         }
     }

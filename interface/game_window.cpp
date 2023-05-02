@@ -132,7 +132,7 @@ void GameWindow::applyDifferedActions()
                 differedInsertStage(action.Stage, action.Index);
                 break;
             case StageAction::Push:
-                differedInsertStage(action.Stage, stages_.size());
+                differedInsertStage(action.Stage, (unsigned int)stages_.size());
                 break;
         }
         differ_queue_.pop();

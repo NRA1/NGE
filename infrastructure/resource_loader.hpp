@@ -1,11 +1,10 @@
 #ifndef NGE_RESOURCE_LOADER_HPP
 #define NGE_RESOURCE_LOADER_HPP
 
-#include <ft2build.h>
-#include FT_FREETYPE_H
 #include <filesystem>
 #include <optional>
 #include <fstream>
+#include <string>
 #include <boost/dll/runtime_symbol_info.hpp>
 #include <map>
 #include "logger.hpp"
@@ -15,6 +14,9 @@
 #include "assimp/scene.h"
 #include "game.hpp"
 #include "common_fallbacks.hpp"
+
+#include <ft2build.h>
+#include FT_FREETYPE_H
 
 class ResourceLoader
 {

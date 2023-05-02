@@ -42,7 +42,7 @@ void SaveManager::dump(WorldStage *world_stage, const std::string &path, void *u
 void SaveManager::dump_objects(std::vector<Object *> &objects, std::ofstream &ofs)
 {
     if(!ofs.is_open()) throw "File not open";
-    unsigned int len = objects.size();
+    unsigned int len = (unsigned int)objects.size();
     ofs.write((char*) &len, sizeof(unsigned int));
     for (auto &obj : objects)
     {
@@ -71,7 +71,7 @@ void SaveManager::dump_rotation(Rotation &rotation, std::ofstream &ofs)
 void SaveManager::dump_components(std::vector<AbstractComponent *> &components, std::ofstream &ofs)
 {
     if(!ofs.is_open()) throw "File not open";
-    unsigned int len = components.size();
+    unsigned int len = (unsigned int)components.size();
     ofs.write((char*) &len, sizeof(unsigned int));
     for(auto &component : components)
     {

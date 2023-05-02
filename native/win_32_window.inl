@@ -173,11 +173,6 @@ LRESULT CALLBACK Win32Window<T>::windowProc(HWND hwnd, UINT message, WPARAM wpar
     case WM_KEYDOWN:
     {
         Key key = native::nativeToKey(wparam);
-        if (key == KeyEscape)
-        {
-            win->should_close_ = true;
-            return 0;
-        }
         int modifiers = win->pressed_modifiers_;
         int repeated = lparam & 0x40000000;
         Modifier modifier = modifier::modifierFromKey(key);
@@ -195,8 +190,49 @@ LRESULT CALLBACK Win32Window<T>::windowProc(HWND hwnd, UINT message, WPARAM wpar
     }
     case WM_MOUSEMOVE:
     {
-        dispatch_event = new MouseMoveEvent((int)(GET_X_LPARAM(lparam) - win->size().width() / 2), (int)(GET_Y_LPARAM(lparam) - win->size().width() / 2), win->pressed_modifiers_);
-        win->resetCursor();
+        if (!win->cursorVisible())
+        {
+            dispatch_event = new MouseMoveEvent((float)(GET_X_LPARAM(lparam) - win->size().width() / 2), (float)(GET_Y_LPARAM(lparam) - win->size().width() / 2), win->pressed_modifiers_);
+            win->resetCursor();
+        }
+        else
+        {
+            float x = GET_X_LPARAM(lparam) - (win->size().width() / 2);
+            float y = (win->size().height() / 2) - GET_Y_LPARAM(lparam);
+            dispatch_event = new MouseMoveEvent(x, y, win->pressed_modifiers_);
+        }
+        break;
+    }
+    case WM_LBUTTONDOWN:
+    {
+        float x, y;
+        if (!win->cursorVisible())
+        {
+            x = GET_X_LPARAM(lparam) - win->size().width() / 2;
+            y = GET_Y_LPARAM(lparam) - win->size().height() / 2;
+        }
+        else
+        {
+            x = GET_X_LPARAM(lparam) - (win->size().width() / 2);
+            y = (win->size().height() / 2) - GET_Y_LPARAM(lparam);
+        }
+        dispatch_event = new MousePressEvent(x, y, MouseButton::LeftButton, win->pressed_modifiers_);
+        break;
+    }
+    case WM_LBUTTONUP:
+    {
+        float x, y;
+        if (!win->cursorVisible())
+        {
+            x = GET_X_LPARAM(lparam) - win->size().width() / 2;
+            y = GET_Y_LPARAM(lparam) - win->size().height() / 2;
+        }
+        else
+        {
+            x = GET_X_LPARAM(lparam) - (win->size().width() / 2);
+            y = (win->size().height() / 2) - GET_Y_LPARAM(lparam);
+        }
+        dispatch_event = new MouseReleaseEvent(x, y, MouseButton::LeftButton, win->pressed_modifiers_);
         break;
     }
     default:
@@ -225,9 +261,10 @@ void Win32Window<T>::swapBuffers()
 template<class T>
 void Win32Window<T>::setCursorVisibility(bool visible)
 {
+    if (this->cursorVisible() == visible) return;
+    AbstractNativeWindow<T>::setCursorVisibility(visible);
     ShowCursor(visible);
     clipCursor();
-    AbstractNativeWindow<T>::setCursorVisibility(visible);
 }
 
 template<typename T>

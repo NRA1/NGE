@@ -91,7 +91,7 @@ void WorldStage::onAppearing()
     }
     if(track_file_path_.has_value())
     {
-        track_file_ = std::ofstream(ResourceLoader::fullPath(track_file_path_.value()), std::ios::binary);
+        track_file_ = std::ofstream(ResourceLoader::fullPath(track_file_path_.value()).string(), std::ios::binary);
         if(!track_file_->is_open())
         {
             log() - Critical < "Failed to open track file. Object will not be tracked.";
@@ -108,7 +108,10 @@ void WorldStage::onDisappearing()
 
     if(track_file_.has_value())
     {
-        if(track_file_->is_open()) track_file_->close();
+        if (track_file_->is_open())
+        {
+            track_file_->close();
+        }
         track_file_ = std::nullopt;
     }
 
@@ -140,6 +143,11 @@ bool WorldStage::handleEvent(Event *event)
         else if(input_delegate_(this, event)) return true;
     }
     return false;
+}
+
+Ground* WorldStage::ground() const
+{
+    return ground_;
 }
 
 void WorldStage::setGround(Ground *ground)
@@ -295,7 +303,19 @@ void WorldStage::setTrackObject(const std::optional<std::string> &object)
 
 void WorldStage::setTrackFilePath(std::optional<std::string> path)
 {
+    if (track_file_.has_value() && track_file_->is_open()) track_file_->close();
     track_file_path_ = std::move(path);
+    if (path.has_value())
+    {
+        track_file_ = std::ofstream(ResourceLoader::fullPath(track_file_path_.value()).string(), std::ios::binary);
+        if (!track_file_->is_open())
+        {
+            log() - Critical < "Failed to open track file. Object will not be tracked.";
+            track_file_ = std::nullopt;
+        }
+    }
+    else
+        track_file_ = std::nullopt;
 }
 
 bool WorldStage::freeze() const

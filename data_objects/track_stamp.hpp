@@ -7,7 +7,7 @@ struct TrackStamp
 {
     Vec3 Pos;
     Vec3 Rotation;
-    unsigned int Delta;
+    int Delta;
 };
 
 #endif //NGE_TRACK_STAMP_HPP
